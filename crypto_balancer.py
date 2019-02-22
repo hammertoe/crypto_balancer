@@ -57,13 +57,6 @@ class SimpleBalancer():
 
         return {'orders':orders, 'amounts': amounts}
 
-    def calc_differences(self, amounts, rates):
-        current_percentages = self.calc_cur_percentage(amounts, rates)
-        differences = {}
-        for cur in self.targets:
-            differences[cur] = self.targets[cur] - current_percentages[cur]
-        return differences
-
     def calc_cur_percentage(self, amounts, rates):
         # first convert the amounts into their base value
         base_values = {}

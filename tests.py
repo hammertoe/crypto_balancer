@@ -150,26 +150,6 @@ class test_Balancer(unittest.TestCase):
                     }
         self.assertEqual(current_percentages, expected)
 
-    def test_simple_balancer_differences_start_xrp_xlm_usdt_rates(self):
-
-        targets = {'XRP': 50,
-                   'XLM': 40,
-                   'USDT': 10,}
-        current = {'XRP': 100,
-                   'XLM': 100,
-                   'USDT': 50,}
-        base = "USDT"
-        rates = {'XRP/USDT': 0.1,
-                 'XLM/USDT': 0.4,
-                 }
-        balancer = SimpleBalancer(targets, base)
-        differences = balancer.calc_differences(current, rates)
-        expected = {'XRP': 40,
-                    'XLM': 0,
-                    'USDT': -40,
-                    }
-        self.assertEqual(differences, expected)
-
     def test_simple_balancer_start_xrp_xlm_usdt_rates(self):
 
         targets = {'XRP': 50,
