@@ -371,9 +371,9 @@ class test_Balancer(unittest.TestCase):
         targets = {'XRP': 45,
                    'XLM': 45,
                    'USDT': 10,}
-        current = {'XRP': 3352,
+        current = {'XRP': 6703.45,
                    'XLM': 0,
-                   'USDT': 243,}
+                   'USDT': 243.31,}
         base = "USDT"
         rates = {'XRP/USDT': 0.32076,
                  'XLM/USDT': 0.09084,
@@ -384,15 +384,15 @@ class test_Balancer(unittest.TestCase):
 
 
         current_percentages = balancer.calc_cur_percentage(current, rates)
-        expected = {'USDT': 18.434403020292592,
+        expected = {'XRP': 89.83458852984236,
                     'XLM': 0.0,
-                    'XRP': 81.56559697970741}
+                    'USDT': 10.165411470157638}
         self.assertEqual(current_percentages, expected)
 
         res = balancer(current, rates)
         # Test the orders we get are correct
-        expected = [Order('XLM/XRP', 'BUY', 5306.0671070013195),
-                    Order('XLM/USDT', 'BUY', 1223.9239101717305),]
+        expected = [Order('XLM/XRP', 'BUY', 11813.295267503301),
+                    Order('XLM/USDT', 'BUY', 43.58363936591818),]
         self.assertEqual(res['orders'], expected)
 
         # Test that the final amounts are in proportion to the targets
@@ -403,5 +403,57 @@ class test_Balancer(unittest.TestCase):
         total_base = sum(base_amounts.values())
         for cur in targets:
             self.assertAlmostEqual(targets[cur], (base_amounts[cur] / total_base) * 100)
-        
+
+    def test_simple_balancer_real2a(self):
+
+        targets = {'XRP': 40,
+                   'XLM': 20,
+                   'BTC': 20,
+                   'ETH': 10,
+                   'USDT': 10,}
+        current = {'XRP': 3352,
+                   'XLM': 0,
+                   'BTC': 0,
+                   'ETH': 0,
+                   'USDT': 243,}
+        base = "USDT"
+        rates = {'XRP/USDT': 0.32076,
+                 'XLM/USDT': 0.09084,
+                 'XLM/XRP': 0.283366,
+                 'XRP/BTC': 0.00008102,
+                 'XRP/ETH': 0.00217366,
+                 'BTC/USDT': 3968.13,
+                 'ETH/USDT': 147.81,
+                 }
+
+        balancer = SimpleBalancer(targets, base)
+
+
+        current_percentages = balancer.calc_cur_percentage(current, rates)
+        expected = {'USDT': 18.434403020292592,
+                    'BTC': 0,
+                    'ETH': 0,
+                    'XLM': 0.0,
+                    'XRP': 81.56559697970741}
+        self.assertEqual(current_percentages, expected)
+
+        res = balancer(current, rates)
+        # Test the orders we get are correct
+        expected = [Order('XRP/BTC', 'SELL', 821.9151515151515),
+                    Order('XLM/XRP', 'BUY', 2902.218229854689),
+                    Order('ETH/USDT', 'BUY', 0.7521902983559976),
+                    Order('XRP/ETH', 'SELL', 64.3393939393937),
+                    Order('XRP/ETH', 'SELL', 1.7721479879289194e-13),
+                   ]
+        self.assertEqual(res['orders'], expected)
+
+        # Test that the final amounts are in proportion to the targets
+        base_amounts = {}
+        for cur in res['amounts']:
+            pair = "{}/{}".format(cur, base)
+            base_amounts[cur] = res['amounts'][cur] * rates[pair]
+        total_base = sum(base_amounts.values())
+        for cur in targets:
+            self.assertAlmostEqual(targets[cur], (base_amounts[cur] / total_base) * 100)
+            
 unittest.main()
