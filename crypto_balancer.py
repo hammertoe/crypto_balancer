@@ -10,7 +10,7 @@ class SimpleBalancer():
     def __init__(self, targets, base):
         self.targets = targets
         self.base = base
-        self.rounds = 3
+        self.rounds = 6
 
     def __call__(self, amounts, rates):
         orders = []
