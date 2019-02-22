@@ -13,55 +13,49 @@ class SimpleBalancer():
         self.rounds = 3
 
     def __call__(self, amounts, rates):
-#        import pdb; pdb.set_trace()
         orders = []
+        rates["{}/{}".format(self.base, self.base)] = 1.0
         for i in range(self.rounds):
             differences = self.calc_base_differences(amounts, rates)
             sorted_by_diff = sorted(tuple(differences.items()), key=lambda x: x[1])
-            highest_cur, highest_amount = sorted_by_diff[0]
-            lowest_cur, lowest_amount = sorted_by_diff[-1]
 
-            symbol = '{}/{}'.format(lowest_cur, highest_cur)
-            direction = None
+            to_sell_cur, to_sell_amount_base = sorted_by_diff[0]
+            to_buy_cur, to_buy_amount_base = sorted_by_diff[-1]
 
-            if symbol in rates:
-                direction = 'BUY'
+            to_sell_amount_base = abs(to_sell_amount_base)
+            to_buy_amount_base = abs(to_buy_amount_base)
+
+            if not (to_sell_amount_base and to_buy_amount_base):
+                break
+            
+            trade_amount_base = min(to_buy_amount_base, to_sell_amount_base)
+            trade_pair = "{}/{}".format(to_buy_cur, to_sell_cur)
+
+            to_sell_pair_base = "{}/{}".format(to_sell_cur, self.base)
+            to_sell_amount_cur = trade_amount_base / rates[to_sell_pair_base]
+
+            to_buy_pair_base = "{}/{}".format(to_buy_cur, self.base)
+            to_buy_amount_cur = trade_amount_base / rates[to_buy_pair_base]
+                        
+            if trade_pair in rates:
+                trade_direction = 'BUY'
+                trade_rate = rates[trade_pair]
+                trade_amount = to_buy_amount_cur
             else:
-                symbol = '{}/{}'.format(highest_cur, lowest_cur)
-                if symbol in rates:
-                    direction = 'SELL'
+                trade_pair = "{}/{}".format(to_sell_cur, to_buy_cur)
+                if trade_pair in rates:
+                    trade_direction = 'SELL'
+                    trade_rate = rates[trade_pair]
+                    trade_amount = to_sell_amount_cur
                 else:
-                    raise ValueError("Invalid symbol")
-            rate = rates[symbol]    
-#            print(symbol, direction, sorted_by_diff)
-            highest_amount = -highest_amount
-
-            if direction == 'BUY':
-                # BUY
-                leftover = highest_amount - lowest_amount
-                to_use = lowest_amount
-
-                if to_use == 0:
-                    break
-
-                orders.append(Order(symbol, 'BUY', to_use / rate))
-                amounts[highest_cur] -= to_use 
-                amounts[lowest_cur] += to_use / rate
-
-            else:
-                # SELL
-                leftover = lowest_amount - highest_amount
-                to_use = highest_amount
-
-                if to_use == 0:
-                    break
-
-                orders.append(Order(symbol, 'SELL', to_use / rate))
-                amounts[highest_cur] -= to_use / rate
-                amounts[lowest_cur] += to_use
+                    raise ValueError("Invalid pair")
                 
+            orders.append(Order(trade_pair, trade_direction, trade_amount))
 
-        return orders
+            amounts[to_sell_cur] -= to_sell_amount_cur
+            amounts[to_buy_cur] += to_buy_amount_cur
+
+        return {'orders':orders, 'amounts': amounts}
 
     def calc_differences(self, amounts, rates):
         current_percentages = self.calc_cur_percentage(amounts, rates)
@@ -78,8 +72,8 @@ class SimpleBalancer():
             if cur == self.base:
                 base_values[cur] = amount
             else:
-                symbol = "{}/{}".format(cur, self.base)
-                base_values[cur] = amount * rates[symbol]
+                pair = "{}/{}".format(cur, self.base)
+                base_values[cur] = amount * rates[pair]
 
         total_base_value = sum(base_values.values())
         for cur,base_value in base_values.items():
@@ -95,8 +89,8 @@ class SimpleBalancer():
             if cur == self.base:
                 base_values[cur] = amount
             else:
-                symbol = "{}/{}".format(cur, self.base)
-                base_values[cur] = amount * rates[symbol]
+                pair = "{}/{}".format(cur, self.base)
+                base_values[cur] = amount * rates[pair]
 
         total_base_value = sum(base_values.values())
         for cur in base_values:
@@ -104,18 +98,18 @@ class SimpleBalancer():
         return differences
     
 class Order():
-    def __init__(self, symbol, direction, amount):
+    def __init__(self, pair, direction, amount):
         if direction not in ['BUY', 'SELL']:
             raise ValueError("{} is not a valid direction".format(direction))
-        self.symbol = symbol
+        self.pair = pair
         self.direction = direction
         self.amount = float(amount)
 
     def __str__(self):
-        return "{} {} {}".format(self.direction, self.amount, self.symbol)
+        return "{} {} {}".format(self.direction, self.amount, self.pair)
 
     def __repr__(self):
-        return "{} {} {}".format(self.direction, self.amount, self.symbol)
+        return "{} {} {}".format(self.direction, self.amount, self.pair)
 
     def __cmp__(self, other):
         return cmp(self.__dict__, other.__dict__)

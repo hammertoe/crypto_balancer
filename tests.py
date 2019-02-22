@@ -36,8 +36,8 @@ class test_Balancer(unittest.TestCase):
                  'XLM/USDT': 1.0,
                  }
         balancer = SimpleBalancer(targets, base)
-        adjustments = balancer(current, rates)
-        self.assertEqual(adjustments, [])
+        res = balancer(current, rates)
+        self.assertEqual(res['orders'], [])
 
     def test_simple_balancer_start_all_usdt(self):
 
@@ -52,9 +52,9 @@ class test_Balancer(unittest.TestCase):
                  'XLM/USDT': 1.0,
                  }
         balancer = SimpleBalancer(targets, base)
-        adjustments = balancer(current, rates)
+        res =balancer(current, rates)
         expected = [Order('XRP/USDT', 'BUY', 500), Order('XLM/USDT', 'BUY', 400),]
-        self.assertEqual(sorted(adjustments), sorted(expected))
+        self.assertEqual(res['orders'], expected)
 
     def test_simple_balancer_start_all_usdt_rates(self):
 
@@ -69,9 +69,9 @@ class test_Balancer(unittest.TestCase):
                  'XLM/USDT': 0.5,
                  }
         balancer = SimpleBalancer(targets, base)
-        adjustments = balancer(current, rates)
+        res =balancer(current, rates)
         expected = [Order('XRP/USDT', 'BUY', 1000), Order('XLM/USDT', 'BUY', 800),]
-        self.assertEqual(sorted(adjustments), sorted(expected))
+        self.assertEqual(res['orders'], expected)
 
     def test_simple_balancer_start_all_xrp(self):
         targets = {'XRP': 50,
@@ -86,9 +86,9 @@ class test_Balancer(unittest.TestCase):
                  'XLM/XRP': 1.0,
                  }
         balancer = SimpleBalancer(targets, base)
-        adjustments = balancer(current, rates)
-        expected = [Order('XRP/USDT', 'SELL', 100), Order('XLM/XRP', 'BUY', 400),]
-        self.assertEqual(sorted(adjustments), sorted(expected))
+        res =balancer(current, rates)
+        expected = [Order('XLM/XRP', 'BUY', 400), Order('XRP/USDT', 'SELL', 100),]
+        self.assertEqual(res['orders'], expected)
 
     def test_simple_balancer_current_percentages_start_all_usdt(self):
 
@@ -183,9 +183,9 @@ class test_Balancer(unittest.TestCase):
                  'XLM/USDT': 0.4,
                  }
         balancer = SimpleBalancer(targets, base)
-        adjustments = balancer(current, rates)
+        res =balancer(current, rates)
         expected = [Order('XRP/USDT', 'BUY', 400),]
-        self.assertEqual(sorted(adjustments), sorted(expected))
+        self.assertEqual(res['orders'], expected)
         
     def test_simple_balancer_base_differences_start_xrp_xlm_usdt_rates(self):
 
@@ -294,9 +294,9 @@ class test_Balancer(unittest.TestCase):
                  'XLM/USDT': 0.4,
                  }
         balancer = SimpleBalancer(targets, base)
-        adjustments = balancer(current, rates)
+        res =balancer(current, rates)
         expected = [Order('XRP/USDT', 'BUY', 400),]
-        self.assertEqual(sorted(adjustments), sorted(expected))
+        self.assertEqual(res['orders'], expected)
 
     def test_simple_balancer_mixed2a(self):
 
@@ -311,9 +311,9 @@ class test_Balancer(unittest.TestCase):
                  'XLM/USDT': 1.0,
                  }
         balancer = SimpleBalancer(targets, base)
-        adjustments = balancer(current, rates)
-        expected = [Order('XRP/USDT', 'BUY', 5), Order('XLM/USDT', 'BUY', 5),]
-        self.assertEqual(sorted(adjustments), sorted(expected))
+        res =balancer(current, rates)
+        expected = [Order('XLM/USDT', 'BUY', 5), Order('XRP/USDT', 'BUY', 5),]
+        self.assertEqual(res['orders'], expected)
 
     def test_simple_balancer_mixed2b(self):
 
@@ -328,9 +328,9 @@ class test_Balancer(unittest.TestCase):
                  'XLM/USDT': 0.5,
                  }
         balancer = SimpleBalancer(targets, base)
-        adjustments = balancer(current, rates)
-        expected = [Order('XRP/USDT', 'BUY', 10), Order('XLM/USDT', 'BUY', 10),]
-        self.assertEqual(sorted(adjustments), sorted(expected))
+        res =balancer(current, rates)
+        expected = [Order('XLM/USDT', 'BUY', 10), Order('XRP/USDT', 'BUY', 10),]
+        self.assertEqual(res['orders'], expected)
 
     def test_simple_balancer_mixed3a(self):
 
@@ -355,9 +355,9 @@ class test_Balancer(unittest.TestCase):
                     }
         self.assertEqual(current_percentages, expected)
         
-        adjustments = balancer(current, rates)
+        res =balancer(current, rates)
         expected = [Order('XRP/USDT', 'SELL', 5), Order('XLM/USDT', 'SELL', 5),]
-        self.assertEqual(sorted(adjustments), sorted(expected))
+        self.assertEqual(res['orders'], expected)
 
     def test_simple_balancer_mixed3b(self):
 
@@ -382,8 +382,46 @@ class test_Balancer(unittest.TestCase):
                     }
         self.assertEqual(current_percentages, expected)
         
-        adjustments = balancer(current, rates)
+        res =balancer(current, rates)
         expected = [Order('XRP/USDT', 'SELL', 10), Order('XLM/USDT', 'SELL', 10),]
-        self.assertEqual(sorted(adjustments), sorted(expected))
+        self.assertEqual(res['orders'], expected)
+
+    def test_simple_balancer_real1a(self):
+
+        targets = {'XRP': 45,
+                   'XLM': 45,
+                   'USDT': 10,}
+        current = {'XRP': 3352,
+                   'XLM': 0,
+                   'USDT': 243,}
+        base = "USDT"
+        rates = {'XRP/USDT': 0.32076,
+                 'XLM/USDT': 0.09084,
+                 'XLM/XRP': 0.283366,
+                 }
+
+        balancer = SimpleBalancer(targets, base)
+
+
+        current_percentages = balancer.calc_cur_percentage(current, rates)
+        expected = {'USDT': 18.434403020292592,
+                    'XLM': 0.0,
+                    'XRP': 81.56559697970741}
+        self.assertEqual(current_percentages, expected)
+
+        res = balancer(current, rates)
+        # Test the orders we get are correct
+        expected = [Order('XLM/XRP', 'BUY', 5306.0671070013195),
+                    Order('XLM/USDT', 'BUY', 1223.9239101717305),]
+        self.assertEqual(res['orders'], expected)
+
+        # Test that the final amounts are in proportion to the targets
+        base_amounts = {}
+        for cur in res['amounts']:
+            pair = "{}/{}".format(cur, base)
+            base_amounts[cur] = res['amounts'][cur] * rates[pair]
+        total_base = sum(base_amounts.values())
+        for cur in targets:
+            self.assertAlmostEqual(targets[cur], (base_amounts[cur] / total_base) * 100)
         
 unittest.main()
