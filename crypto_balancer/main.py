@@ -4,8 +4,8 @@ import configparser
 import logging
 import sys
 
-from order import Order
-from simple_balancer import SimpleBalancer
+from crypto_balancer.order import Order
+from crypto_balancer.simple_balancer import SimpleBalancer
 
 logger = logging.getLogger(__name__)
 
