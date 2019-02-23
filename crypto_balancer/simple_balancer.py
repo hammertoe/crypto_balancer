@@ -1,16 +1,23 @@
 from crypto_balancer.order import Order
 
 class SimpleBalancer():
-    def __init__(self, targets, base):
+    def __init__(self, targets, base, rounds=6, threshold=1):
         self.targets = targets
         self.base = base
-        self.rounds = 6
+        self.rounds = rounds
+        self.threshold = threshold
 
-    def __call__(self, amounts, rates):
+    def __call__(self, amounts, rates, force=False):
+        new_amounts = amounts.copy()
         orders = []
+
+        # exit if don't need to balance and not forcing
+        if not self.needs_balancing(new_amounts, rates) and not force:
+            return {'orders':orders, 'amounts': new_amounts}
+        
         rates["{}/{}".format(self.base, self.base)] = 1.0
         for i in range(self.rounds):
-            differences = self.calc_base_differences(amounts, rates)
+            differences = self.calc_base_differences(new_amounts, rates)
             sorted_by_diff = sorted(tuple(differences.items()), key=lambda x: x[1])
 
             to_sell_cur, to_sell_amount_base = sorted_by_diff[0]
@@ -46,11 +53,18 @@ class SimpleBalancer():
                 
             orders.append(Order(trade_pair, trade_direction, trade_amount))
 
-            amounts[to_sell_cur] -= to_sell_amount_cur
-            amounts[to_buy_cur] += to_buy_amount_cur
+            new_amounts[to_sell_cur] -= to_sell_amount_cur
+            new_amounts[to_buy_cur] += to_buy_amount_cur
 
-        return {'orders':orders, 'amounts': amounts}
+        return {'orders':orders, 'amounts': new_amounts}
 
+    def needs_balancing(self, amounts, rates):
+        current_percentages = self.calc_cur_percentage(amounts, rates)
+        for cur in self.targets:
+            if abs(self.targets[cur] - current_percentages[cur]) > self.threshold:
+                return True
+        return False
+    
     def calc_cur_percentage(self, amounts, rates):
         # first convert the amounts into their base value
         base_values = {}
@@ -60,6 +74,8 @@ class SimpleBalancer():
                 base_values[cur] = amount
             else:
                 pair = "{}/{}".format(cur, self.base)
+                if pair not in rates:
+                    raise ValueError("Invalid pair: {}".format(pair))
                 base_values[cur] = amount * rates[pair]
 
         total_base_value = sum(base_values.values())

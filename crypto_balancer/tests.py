@@ -539,5 +539,125 @@ class test_SimpleBalancer(unittest.TestCase):
         with self.assertRaises(ValueError):
             res = balancer(current, rates)
 
+    def test_simple_balancer_badpair3(self):
+
+        targets = {'XRP': 40,
+                   'XLM': 20,
+                   'BTC': 20,
+                   'ETH': 10,
+                   'USDT': 10,}
+        current = {'XRP': 3352,
+                   'XLM': 0,
+                   'BTC': 0,
+                   'ETH': 0,
+                   'USDT': 243,}
+        base = "USDT"
+        rates = {'XRP/USDT': 0.32076,
+                 'XLM/USDT': 0.09084,
+                 'XLM/XRP': 0.283366,
+                 'XRP/BTC': 0.00008102,
+                 'XRP/ETH': 0.00217366,
+                 }
+
+        balancer = SimpleBalancer(targets, base)
+        with self.assertRaises(ValueError):
+            balancer.calc_base_differences(current, rates)
+
+    def test_simple_balancer_threshold_inbalance(self):
+
+        targets = {'XRP': 45,
+                   'XLM': 45,
+                   'USDT': 10,}
+        current = {'XRP': 45,
+                   'XLM': 45,
+                   'USDT': 10}
+        base = "USDT"
+        rates = {'XRP/USDT': 1.0,
+                 'XLM/USDT': 1.0,
+                 'XLM/XRP': 1.0,
+                 }
+
+        balancer = SimpleBalancer(targets, base)
+        res = balancer(current, rates)
+
+        # test if portfolio needs balancing
+        self.assertFalse(balancer.needs_balancing(current, rates))
+        
+        # Test the orders we get are correct
+        expected = []
+        self.assertEqual(res['orders'], expected)
+
+    def test_simple_balancer_threshold_under(self):
+
+        targets = {'XRP': 45,
+                   'XLM': 45,
+                   'USDT': 10,}
+        current = {'XRP': 46,
+                   'XLM': 45,
+                   'USDT': 9}
+        base = "USDT"
+        rates = {'XRP/USDT': 1.0,
+                 'XLM/USDT': 1.0,
+                 'XLM/XRP': 1.0,
+                 }
+
+        balancer = SimpleBalancer(targets, base)
+        res = balancer(current, rates)
+
+        # test if portfolio needs balancing
+        self.assertFalse(balancer.needs_balancing(current, rates))
+
+        # Test the orders we get are correct
+        expected = []
+        self.assertEqual(res['orders'], expected)
+
+    def test_simple_balancer_threshold_under_force(self):
+
+        targets = {'XRP': 45,
+                   'XLM': 45,
+                   'USDT': 10,}
+        current = {'XRP': 46,
+                   'XLM': 45,
+                   'USDT': 9}
+        base = "USDT"
+        rates = {'XRP/USDT': 1.0,
+                 'XLM/USDT': 1.0,
+                 'XLM/XRP': 1.0,
+                 }
+
+        balancer = SimpleBalancer(targets, base)
+        res = balancer(current, rates, force=True)
+
+        # test if portfolio needs balancing
+        self.assertFalse(balancer.needs_balancing(current, rates))
+
+        # Test the orders we get are correct
+        expected = [Order('XRP/USDT', 'SELL', 1)]
+        self.assertEqual(res['orders'], expected)
+
+    def test_simple_balancer_threshold_over(self):
+
+        targets = {'XRP': 45,
+                   'XLM': 45,
+                   'USDT': 10,}
+        current = {'XRP': 40,
+                   'XLM': 40,
+                   'USDT': 20}
+        base = "USDT"
+        rates = {'XRP/USDT': 1.0,
+                 'XLM/USDT': 1.0,
+                 'XLM/XRP': 1.0,
+                 }
+
+        balancer = SimpleBalancer(targets, base)
+        res = balancer(current, rates)
+
+        # test if portfolio needs balancing
+        self.assertTrue(balancer.needs_balancing(current, rates))
+
+        # Test the orders we get are correct
+        expected = [Order('XLM/USDT', 'BUY', 5), Order('XRP/USDT', 'BUY', 5),]
+        self.assertEqual(res['orders'], expected)
+
 if __name__ == '__main__': # pragma: no cover
     unittest.main()
