@@ -1,0 +1,15 @@
+language: python
+python:
+  - "3.6"
+cache: pip
+install: 
+ - pip install -U setuptools
+ - pip install -r requirements.txt
+ - pip install coveralls
+# command to run tests
+script:
+ - py.test --cov=crypto_balancer ./crypto_balancer/tests.py
+notifications:
+ - slack: quernus:FSJYjitrzrSX83EAcD8MyNuE
+after_success:
+ - coveralls
