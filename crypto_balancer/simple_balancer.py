@@ -68,10 +68,8 @@ class SimpleBalancer():
                 return True
         return False
     
-    def calc_cur_percentage(self, amounts, rates):
-        # first convert the amounts into their base value
+    def calc_base_values(self, amounts, rates):
         base_values = {}
-        current_percentages = {}
         for cur,amount in amounts.items():
             if cur == self.base:
                 base_values[cur] = amount
@@ -81,28 +79,26 @@ class SimpleBalancer():
                     raise ValueError("Invalid pair: {}".format(pair))
                 base_values[cur] = amount * rates[pair]
 
+        return base_values
+
+    def calc_cur_percentage(self, amounts, rates):
+        # first convert the amounts into their base value
+        base_values = self.calc_base_values(amounts, rates)
+        current_percentages = {}
         total_base_value = sum(base_values.values())
         for cur,base_value in base_values.items():
-            current_percentages[cur] = (base_value/total_base_value) * 100
-            
+            if total_base_value:
+                current_percentages[cur] = (base_value/total_base_value) * 100
+            else:
+                current_percentages[cur] = 0
+
         return current_percentages
 
     def calc_base_differences(self, amounts, rates):
         # first convert the amounts into their base value
-        base_values = {}
+        base_values = self.calc_base_values(amounts, rates)
         differences = {}
-        for cur,amount in amounts.items():
-            if cur == self.base:
-                base_values[cur] = amount
-            else:
-                pair = "{}/{}".format(cur, self.base)
-                if pair not in rates:
-                    raise ValueError("Invalid pair: {}".format(pair))
-                base_values[cur] = amount * rates[pair]
-
         total_base_value = sum(base_values.values())
         for cur in base_values:
             differences[cur] = (total_base_value*(self.targets[cur]/100.0)) - base_values[cur]
         return differences
-    
-
