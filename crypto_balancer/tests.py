@@ -658,5 +658,43 @@ class test_SimpleBalancer(unittest.TestCase):
         expected = [Order('XLM/USDT', 'BUY', 5), Order('XRP/USDT', 'BUY', 5),]
         self.assertEqual(res['orders'], expected)
 
+    def test_simple_balancer_zero_balance(self):
+
+        targets = {'XRP': 40,
+                   'XLM': 20,
+                   'BTC': 20,
+                   'ETH': 10,
+                   'USDT': 10,}
+        current = {'XRP': 0,
+                   'XLM': 0,
+                   'BTC': 0,
+                   'ETH': 0,
+                   'USDT': 0,}
+        base = "USDT"
+        rates = {'XRP/USDT': 0.32076,
+                 'XLM/USDT': 0.09084,
+                 'XLM/XRP': 0.283366,
+                 'XRP/BTC': 0.00008102,
+                 'XRP/ETH': 0.00217366,
+                 'BTC/USDT': 3968.13,
+                 'ETH/USDT': 147.81,
+                 }
+
+        balancer = SimpleBalancer(targets, base)
+
+        current_percentages = balancer.calc_cur_percentage(current, rates)
+        expected = {'USDT': 0,
+                    'BTC': 0,
+                    'ETH': 0,
+                    'XLM': 0,
+                    'XRP': 0}
+        self.assertEqual(current_percentages, expected)
+
+        res = balancer(current, rates)
+        # Test the orders we get are correct
+        expected = []
+        self.assertEqual(res['orders'], expected)
+
+        
 if __name__ == '__main__': # pragma: no cover
     unittest.main()
