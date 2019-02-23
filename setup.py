@@ -5,7 +5,7 @@ setup(name='crypto_balancer',
       packages=['crypto_balancer'],
       entry_points={
           'console_scripts': [
-              'crypto_balancer = crypto_balancer.crypto_balancer:main'
+              'crypto_balancer = crypto_balancer.main:main'
           ]
       },
       )

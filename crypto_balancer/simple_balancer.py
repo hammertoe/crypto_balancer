@@ -1,10 +1,4 @@
-import argparse
-import ccxt
-import configparser
-import logging
-import sys
-
-logger = logging.getLogger(__name__)
+from crypto_balancer.order import Order
 
 class SimpleBalancer():
     def __init__(self, targets, base):
@@ -90,67 +84,4 @@ class SimpleBalancer():
             differences[cur] = (total_base_value*(self.targets[cur]/100.0)) - base_values[cur]
         return differences
     
-class Order():
-    def __init__(self, pair, direction, amount):
-        if direction not in ['BUY', 'SELL']:
-            raise ValueError("{} is not a valid direction".format(direction))
-        self.pair = pair
-        self.direction = direction
-        self.amount = float(amount)
 
-    def __str__(self):
-        return "{} {} {}".format(self.direction, self.amount, self.pair)
-
-    def __repr__(self):
-        return "{} {} {}".format(self.direction, self.amount, self.pair)
-
-    def __cmp__(self, other):
-        return cmp(self.__dict__, other.__dict__)
-
-    def __eq__(self, other):
-        return self.__dict__ == other.__dict__
-
-    def __lt__(self, other):
-        return str(self) <  str(other)
-
-def main(args=None):
-    config = configparser.ConfigParser()
-    config.read('config.ini')
-
-    def exchange_choices():
-        return set(config.sections()) & set(ccxt.exchanges)
-
-    parser = argparse.ArgumentParser(description='Balance holdings on an exchange.')
-    parser.add_argument('--dry', action='store_true', help='dry run. Do not actually place trades')
-    parser.add_argument('--valuebase', default='USDT', help='currency to value portfolio in')
-    parser.add_argument('exchange', choices=exchange_choices())
-    args = parser.parse_args()
-
-    config = config[args.exchange]
-
-    try:
-        targets = [ x.split() for x in config['targets'].split('\n') ]
-        targets = dict([ [a,float(b)] for (a,b) in targets ])
-    except:
-        logger.error("Targets format invalid")
-        sys.exit(1)
-
-    total_target = sum(targets.values())
-    if total_target != 100:
-        logger.error("Total target needs to equal 100, it is {}".format(total_target))
-        sys.exit(1)
-
-    exch = getattr(ccxt, args.exchange)({'nonce': ccxt.Exchange.milliseconds})
-    exch.apiKey = config['api_key']
-    exch.secret = config['api_secret']
-    markets = exch.load_markets()
-
-    raw_balances = exch.fetch_balance()
-    balances = {}
-    for cur in targets:
-        balances[cur] = raw_balances[cur]['total']
-
-    print(balances)
-
-if __name__ == '__main__':
-    main()
