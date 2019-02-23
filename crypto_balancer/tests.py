@@ -490,5 +490,54 @@ class test_SimpleBalancer(unittest.TestCase):
         for cur in targets:
             self.assertAlmostEqual(targets[cur], (base_amounts[cur] / total_base) * 100)
 
-if __name__ == '__main__':
-    unittest.main() # noqa
+    def test_simple_balancer_badpair1(self):
+
+        targets = {'XRP': 40,
+                   'XLM': 20,
+                   'BTC': 20,
+                   'ETH': 10,
+                   'USDT': 10,}
+        current = {'XRP': 3352,
+                   'XLM': 0,
+                   'BTC': 0,
+                   'ETH': 0,
+                   'USDT': 243,}
+        base = "USDT"
+        rates = {'XRP/USDT': 0.32076,
+                 'XLM/USDT': 0.09084,
+                 'XRP/BTC': 0.00008102,
+                 'XRP/ETH': 0.00217366,
+                 'BTC/USDT': 3968.13,
+                 'ETH/USDT': 147.81,
+                 }
+
+        balancer = SimpleBalancer(targets, base)
+        with self.assertRaises(ValueError):
+            res = balancer(current, rates)
+
+    def test_simple_balancer_badpair2(self):
+
+        targets = {'XRP': 40,
+                   'XLM': 20,
+                   'BTC': 20,
+                   'ETH': 10,
+                   'USDT': 10,}
+        current = {'XRP': 3352,
+                   'XLM': 0,
+                   'BTC': 0,
+                   'ETH': 0,
+                   'USDT': 243,}
+        base = "USDT"
+        rates = {'XRP/USDT': 0.32076,
+                 'XLM/USDT': 0.09084,
+                 'XLM/XRP': 0.283366,
+                 'XRP/BTC': 0.00008102,
+                 'XRP/ETH': 0.00217366,
+                 }
+
+        balancer = SimpleBalancer(targets, base)
+        with self.assertRaises(ValueError):
+            res = balancer(current, rates)
+
+if __name__ == '__main__': # pragma: no cover
+    unittest.main()
