@@ -491,4 +491,4 @@ class test_SimpleBalancer(unittest.TestCase):
             self.assertAlmostEqual(targets[cur], (base_amounts[cur] / total_base) * 100)
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main() # noqa
