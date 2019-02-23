@@ -77,6 +77,8 @@ class SimpleBalancer():
                 base_values[cur] = amount
             else:
                 pair = "{}/{}".format(cur, self.base)
+                if pair not in rates:
+                    raise ValueError("Invalid pair: {}".format(pair))
                 base_values[cur] = amount * rates[pair]
 
         total_base_value = sum(base_values.values())
