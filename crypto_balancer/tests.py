@@ -16,7 +16,41 @@ sys.path.append('..')      # XXX Probably needed to import your code
 from crypto_balancer.simple_balancer import SimpleBalancer
 from crypto_balancer.order import Order
 
-class test_Balancer(unittest.TestCase):
+class test_Order(unittest.TestCase):
+
+    def test_createOrder(self):
+        order = Order('XRP/USDT', 'BUY', 10)
+        self.assertEqual(order.pair, 'XRP/USDT')
+        self.assertEqual(order.direction, 'BUY')
+        self.assertEqual(order.amount, 10)
+
+        order = Order('XRP/BTC', 'SELL', 20)
+        self.assertEqual(order.pair, 'XRP/BTC')
+        self.assertEqual(order.direction, 'SELL')
+        self.assertEqual(order.amount, 20)
+        
+    def test_createOrderBadDirection(self):
+        with self.assertRaises(ValueError):
+            order = Order('XRP/USDT', 'FOO', 10)
+
+    def test_compareOrders(self):
+        a = Order('XRP/USDT', 'BUY', 10)
+        b = Order('XRP/USDT', 'BUY', 10)
+        self.assertEqual(a, b)
+
+        c = Order('XRP/BTC', 'SELL', 20)
+        self.assertNotEqual(a, c)
+
+        self.assertLess(a, c)
+        self.assertGreater(c, a)
+
+    def test_ReprStrOrder(self):
+        a = Order('XRP/USDT', 'BUY', 10)
+        self.assertEqual(str(a), 'BUY 10.0 XRP/USDT') 
+        self.assertEqual(repr(a), 'BUY 10.0 XRP/USDT') 
+
+
+class test_SimpleBalancer(unittest.TestCase):
     def setUp(self):
         pass
 
