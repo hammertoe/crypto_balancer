@@ -10,6 +10,7 @@ class SimpleBalancer():
     def __call__(self, amounts, rates, force=False):
         new_amounts = amounts.copy()
         orders = []
+        pairs_processed = set()
 
         # exit if don't need to balance and not forcing
         if not self.needs_balancing(new_amounts, rates) and not force:
@@ -50,8 +51,10 @@ class SimpleBalancer():
                     trade_amount = to_sell_amount_cur
                 else:
                     raise ValueError("Invalid pair")
-                
-            orders.append(Order(trade_pair, trade_direction, trade_amount))
+
+            if trade_pair not in pairs_processed:
+                orders.append(Order(trade_pair, trade_direction, trade_amount))
+                pairs_processed.add(trade_pair)
 
             new_amounts[to_sell_cur] -= to_sell_amount_cur
             new_amounts[to_buy_cur] += to_buy_amount_cur
