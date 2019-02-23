@@ -13,8 +13,8 @@ import os
 import sys
 sys.path.append('..')      # XXX Probably needed to import your code
 
-from crypto_balancer import SimpleBalancer
-from crypto_balancer import Order
+from crypto_balancer.crypto_balancer import SimpleBalancer
+from crypto_balancer.crypto_balancer import Order
 
 class test_Balancer(unittest.TestCase):
     def setUp(self):

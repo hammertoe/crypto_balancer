@@ -113,7 +113,7 @@ class Order():
     def __lt__(self, other):
         return str(self) <  str(other)
 
-if __name__ == '__main__':
+def main(args=None):
     config = configparser.ConfigParser()
     config.read('config.ini')
 
@@ -152,3 +152,5 @@ if __name__ == '__main__':
 
     print(balances)
 
+if __name__ == '__main__':
+    main()
