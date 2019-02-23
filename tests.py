@@ -455,5 +455,6 @@ class test_Balancer(unittest.TestCase):
         total_base = sum(base_amounts.values())
         for cur in targets:
             self.assertAlmostEqual(targets[cur], (base_amounts[cur] / total_base) * 100)
-            
-unittest.main()
+
+if __name__ == '__main__':
+    unittest.main()
