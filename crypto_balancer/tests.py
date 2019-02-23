@@ -477,7 +477,6 @@ class test_SimpleBalancer(unittest.TestCase):
                     Order('XLM/XRP', 'BUY', 2902.218229854689),
                     Order('ETH/USDT', 'BUY', 0.7521902983559976),
                     Order('XRP/ETH', 'SELL', 64.3393939393937),
-                    Order('XRP/ETH', 'SELL', 1.7721479879289194e-13),
                    ]
         self.assertEqual(res['orders'], expected)
 
