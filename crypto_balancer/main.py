@@ -4,11 +4,11 @@ import configparser
 import logging
 import sys
 
-from crypto_balancer.order import Order
 from crypto_balancer.simple_balancer import SimpleBalancer
 from crypto_balancer.execute import execute_order
 
 logger = logging.getLogger(__name__)
+
 
 def main(args=None):
     config = configparser.ConfigParser()
@@ -17,25 +17,30 @@ def main(args=None):
     def exchange_choices():
         return set(config.sections()) & set(ccxt.exchanges)
 
-    parser = argparse.ArgumentParser(description='Balance holdings on an exchange.')
-    parser.add_argument('--trade', action="store_true", help='Actually place orders')
-    parser.add_argument('--force', action="store_true", help='Force rebalance')
-    parser.add_argument('--valuebase', default='USDT', help='Currency to value portfolio in')
+    parser = argparse.ArgumentParser(
+        description='Balance holdings on an exchange.')
+    parser.add_argument('--trade', action="store_true",
+                        help='Actually place orders')
+    parser.add_argument('--force', action="store_true",
+                        help='Force rebalance')
+    parser.add_argument('--valuebase', default='USDT',
+                        help='Currency to value portfolio in')
     parser.add_argument('exchange', choices=exchange_choices())
     args = parser.parse_args()
 
     config = config[args.exchange]
 
     try:
-        targets = [ x.split() for x in config['targets'].split('\n') ]
-        targets = dict([ [a,float(b)] for (a,b) in targets ])
-    except:
+        targets = [x.split() for x in config['targets'].split('\n')]
+        targets = dict([[a, float(b)] for (a, b) in targets])
+    except ValueError:
         logger.error("Targets format invalid")
         sys.exit(1)
 
     total_target = sum(targets.values())
     if total_target != 100:
-        logger.error("Total target needs to equal 100, it is {}".format(total_target))
+        logger.error("Total target needs to equal 100, it is {}"
+                     .format(total_target))
         sys.exit(1)
 
     exch = getattr(ccxt, args.exchange)({'nonce': ccxt.Exchange.milliseconds})
@@ -56,7 +61,8 @@ def main(args=None):
     print()
 
     rates = fetch_rates(exch, targets.keys())
-    balancer = SimpleBalancer(targets, args.valuebase, threshold=float(config['threshold']))
+    balancer = SimpleBalancer(targets, args.valuebase,
+                              threshold=float(config['threshold']))
 
     base_values = balancer.calc_base_values(balances, rates)
     total_base_value = sum(base_values.values())
@@ -89,18 +95,21 @@ def main(args=None):
                     continue
                 try:
                     res = execute_order(exch, order)
-                    print("Order placed: {} {} {} @ {} ".format(res['symbol'], res['side'], res['amount'], res['price']))
-                except:
+                    print("Order placed: {} {} {} @ {} "
+                          .format(res['symbol'], res['side'],
+                                  res['amount'], res['price']))
+                except Exception:
                     logger.error("Could not place order: {}".format(order))
         else:
             print("No trades placed, as '--trade' not given on command line")
+
 
 def fetch_rates(exch, curs):
     pairs = []
 
     for i in curs:
         for j in curs:
-            pair = "{}/{}".format(i,j)
+            pair = "{}/{}".format(i, j)
             if pair in exch.markets:
                 pairs.append(pair)
 
@@ -113,6 +122,7 @@ def fetch_rates(exch, curs):
         rates[pair] = mid
 
     return rates
+
 
 if __name__ == '__main__':
     main()
