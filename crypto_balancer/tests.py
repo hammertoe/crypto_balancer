@@ -19,35 +19,37 @@ from crypto_balancer.order import Order
 class test_Order(unittest.TestCase):
 
     def test_createOrder(self):
-        order = Order('XRP/USDT', 'BUY', 10)
+        order = Order('XRP/USDT', 'BUY', 10, 0.32)
         self.assertEqual(order.pair, 'XRP/USDT')
         self.assertEqual(order.direction, 'BUY')
         self.assertEqual(order.amount, 10)
+        self.assertEqual(order.price, 0.32)
 
-        order = Order('XRP/BTC', 'SELL', 20)
+        order = Order('XRP/BTC', 'SELL', 20, 0.0001)
         self.assertEqual(order.pair, 'XRP/BTC')
         self.assertEqual(order.direction, 'SELL')
         self.assertEqual(order.amount, 20)
+        self.assertEqual(order.price, 0.0001)
         
     def test_createOrderBadDirection(self):
         with self.assertRaises(ValueError):
-            order = Order('XRP/USDT', 'FOO', 10)
+            order = Order('XRP/USDT', 'FOO', 10, 0.001)
 
     def test_compareOrders(self):
-        a = Order('XRP/USDT', 'BUY', 10)
-        b = Order('XRP/USDT', 'BUY', 10)
+        a = Order('XRP/USDT', 'BUY', 10, 0.32)
+        b = Order('XRP/USDT', 'BUY', 10, 0.32)
         self.assertEqual(a, b)
 
-        c = Order('XRP/BTC', 'SELL', 20)
+        c = Order('XRP/BTC', 'SELL', 20, 0.0001)
         self.assertNotEqual(a, c)
 
         self.assertLess(a, c)
         self.assertGreater(c, a)
 
     def test_ReprStrOrder(self):
-        a = Order('XRP/USDT', 'BUY', 10)
-        self.assertEqual(str(a), 'BUY 10.0 XRP/USDT') 
-        self.assertEqual(repr(a), 'BUY 10.0 XRP/USDT') 
+        a = Order('XRP/USDT', 'BUY', 10, 0.32)
+        self.assertEqual(str(a), 'BUY 10.0 XRP/USDT @ 0.32') 
+        self.assertEqual(repr(a), 'BUY 10.0 XRP/USDT @ 0.32') 
 
 
 class test_SimpleBalancer(unittest.TestCase):
