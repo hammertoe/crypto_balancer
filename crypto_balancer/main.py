@@ -56,7 +56,7 @@ def main(args=None):
     print()
 
     rates = fetch_rates(exch, targets.keys())
-    balancer = SimpleBalancer(targets, args.valuebase)
+    balancer = SimpleBalancer(targets, args.valuebase, threshold=float(config['threshold']))
 
     base_values = balancer.calc_base_values(balances, rates)
     total_base_value = sum(base_values.values())
