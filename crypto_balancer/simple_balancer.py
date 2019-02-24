@@ -53,7 +53,7 @@ class SimpleBalancer():
                     raise ValueError("Invalid pair")
 
             if trade_pair not in pairs_processed:
-                orders.append(Order(trade_pair, trade_direction, trade_amount))
+                orders.append(Order(trade_pair, trade_direction, trade_amount, trade_rate))
                 pairs_processed.add(trade_pair)
 
             new_amounts[to_sell_cur] -= to_sell_amount_cur

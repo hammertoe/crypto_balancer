@@ -1,11 +1,11 @@
 class Order():
-    def __init__(self, pair, direction, amount, price=None):
+    def __init__(self, pair, direction, amount, price):
         if direction not in ['BUY', 'SELL']:
             raise ValueError("{} is not a valid direction".format(direction))
         self.pair = pair
         self.direction = direction
         self.amount = float(amount)
-        self.price = price
+        self.price = float(price)
 
     def __str__(self):
         return "{} {} {} @ {}".format(self.direction, self.amount, self.pair, self.price)
