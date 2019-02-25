@@ -40,7 +40,7 @@ class test_Order(unittest.TestCase):
     def test_ReprStrOrder(self):
         a = Order('XRP/USDT', 'BUY', 10, 0.32)
         self.assertEqual(str(a), 'BUY 10.0 XRP/USDT @ 0.32')
-        self.assertEqual(repr(a), 'BUY 10.0 XRP/USDT @ 0.32')
+        self.assertEqual(repr(a), "Order('XRP/USDT', 'BUY', 10.0, 0.32)")
 
 
 class test_SimpleBalancer(unittest.TestCase):

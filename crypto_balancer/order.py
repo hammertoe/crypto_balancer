@@ -12,8 +12,8 @@ class Order():
                                       self.pair, self.price)
 
     def __repr__(self):
-        return "{} {} {} @ {}".format(self.direction, self.amount,
-                                      self.pair, self.price)
+        return "Order('{}', '{}', {}, {})".format(self.pair, self.direction,
+                                      self.amount, self.price)
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
