@@ -83,7 +83,10 @@ def main(args=None):
     else:
         print("Balancing needed:")
         for order in orders['orders']:
-            print(order)
+            print("  " + str(order))
+        total_fee = '%s' % float('%.4g' % orders['total_fee'])
+        print("Total fees to re-balance: {} {}".format(total_fee,
+                                                       args.valuebase))
 
         print()
         if args.trade:
