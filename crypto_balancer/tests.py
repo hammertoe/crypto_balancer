@@ -701,6 +701,36 @@ class test_SimpleBalancer(unittest.TestCase):
         expected = []
         self.assertEqual(res['orders'], expected)
 
+    def test_fees1(self):
+        targets = {'XRP': 50,
+                   'XLM': 40,
+                   'USDT': 10, }
+        current = {'XRP': 0,
+                   'XLM': 0,
+                   'USDT': 1000, }
+        base = "USDT"
+        rates = {'XRP/USDT': 1.0,
+                 'XLM/USDT': 1.0,
+                 }
+        balancer = SimpleBalancer(targets, base)
+        res = balancer(current, rates)
+        self.assertEqual(res['total_fee'], 0.9)
+
+    def test_fees2(self):
+        targets = {'XRP': 50,
+                   'XLM': 40,
+                   'USDT': 10, }
+        current = {'XRP': 0,
+                   'XLM': 0,
+                   'USDT': 1000, }
+        base = "USDT"
+        rates = {'XRP/USDT': 1.0,
+                 'XLM/USDT': 1.0,
+                 }
+        balancer = SimpleBalancer(targets, base, fee=0.005)
+        res = balancer(current, rates)
+        self.assertEqual(res['total_fee'], 4.5)
+
 
 if __name__ == '__main__':  # pragma: no cover
     unittest.main()

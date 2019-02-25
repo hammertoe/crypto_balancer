@@ -3,18 +3,18 @@ from random import shuffle, choice
 
 
 class SimpleBalancer():
-    def __init__(self, targets, base, rounds=6, threshold=1):
+    def __init__(self, targets, base, fee=0.001, rounds=6, attempts=10000, threshold=1):
         self.targets = targets
         self.base = base
+        self.fee = fee
         self.rounds = rounds
-        self.attempts = 10000
+        self.attempts = attempts
         self.threshold = threshold
 
     def __call__(self, amounts, rates, force=False):
         new_amounts = amounts.copy()
         pairs_processed = set()
         attempts = []
-        fee = 0.1
 
         # exit if don't need to balance and not forcing
         if not self.needs_balancing(new_amounts, rates) and not force:
@@ -103,7 +103,7 @@ class SimpleBalancer():
                     orders.append(order)
                     pairs_processed.add(trade_pair)
                     # keep track of the total fee of these orders
-                    total_fee += trade_amount_base * (fee/100.0)
+                    total_fee += trade_amount_base * self.fee
 
             # Check the at the end we have no differences outstanding
             # and that none of the new amounts have gone negative

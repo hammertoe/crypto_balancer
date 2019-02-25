@@ -61,7 +61,8 @@ def main(args=None):
     print()
 
     rates = fetch_rates(exch, targets.keys())
-    balancer = SimpleBalancer(targets, args.valuebase,
+    fee = exch.fees['trading']['maker']
+    balancer = SimpleBalancer(targets, args.valuebase, fee,
                               threshold=float(config['threshold']))
 
     base_values = balancer.calc_base_values(balances, rates)
