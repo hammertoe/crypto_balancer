@@ -107,7 +107,7 @@ class SimpleBalancer():
 
             # Check the at the end we have no differences outstanding
             # and that none of the new amounts have gone negative
-            if not [x for x in differences.values() if abs(x) > 1e-12] \
+            if not [x for x in differences.values() if abs(x) > 1e-3] \
                and not [x for x in new_amounts.values() if x < 0]:
                 attempts.append((total_fee, orders, new_amounts))
 
