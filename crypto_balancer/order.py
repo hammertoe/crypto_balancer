@@ -13,7 +13,7 @@ class Order():
 
     def __repr__(self):
         return "Order('{}', '{}', {}, {})".format(self.pair, self.direction,
-                                      self.amount, self.price)
+                                                  self.amount, self.price)
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
