@@ -1,67 +1,91 @@
 from crypto_balancer.order import Order
-
+from random import shuffle
 
 class SimpleBalancer():
     def __init__(self, targets, base, rounds=6, threshold=1):
         self.targets = targets
         self.base = base
         self.rounds = rounds
+        self.attempts = 100
         self.threshold = threshold
 
     def __call__(self, amounts, rates, force=False):
         new_amounts = amounts.copy()
-        orders = []
         pairs_processed = set()
-
+        attempts = []
+        fee = 0.1
+        
         # exit if don't need to balance and not forcing
         if not self.needs_balancing(new_amounts, rates) and not force:
             return {'orders': orders, 'amounts': new_amounts}
 
         rates["{}/{}".format(self.base, self.base)] = 1.0
-        for i in range(self.rounds):
-            differences = self.calc_base_differences(new_amounts, rates)
-            sorted_by_diff = sorted(tuple(differences.items()),
-                                    key=lambda x: x[1])
 
-            to_sell_cur, to_sell_amount_base = sorted_by_diff[0]
-            to_buy_cur, to_buy_amount_base = sorted_by_diff[-1]
+        for _ in range(self.attempts):
+            total_fee = 0.0
+            new_amounts = amounts.copy()
+            pairs_processed = set()
+            orders = []
+            
+            for i in range(self.rounds):
+                differences = self.calc_base_differences(new_amounts, rates)
 
-            to_sell_amount_base = abs(to_sell_amount_base)
-            to_buy_amount_base = abs(to_buy_amount_base)
+                positives = [x for x in differences.items() if x[1] > 0]
+                negatives = [x for x in differences.items() if x[1] < 0]
 
-            if not (to_sell_amount_base and to_buy_amount_base):
-                break
+                shuffle(positives)
+                shuffle(negatives)
+                
+                order = None
 
-            trade_amount_base = min(to_buy_amount_base, to_sell_amount_base)
-            trade_pair = "{}/{}".format(to_buy_cur, to_sell_cur)
+                for p_cur, p_amount in positives:
+                    for n_cur, n_amount in negatives:
+                        if order:
+                            break
 
-            to_sell_pair_base = "{}/{}".format(to_sell_cur, self.base)
-            to_sell_amount_cur = trade_amount_base / rates[to_sell_pair_base]
+                        trade_amount_base = min(p_amount, -n_amount)
 
-            to_buy_pair_base = "{}/{}".format(to_buy_cur, self.base)
-            to_buy_amount_cur = trade_amount_base / rates[to_buy_pair_base]
+                        to_sell_pair_base = "{}/{}".format(n_cur, self.base)
+                        to_buy_pair_base = "{}/{}".format(p_cur, self.base)
 
-            if trade_pair in rates:
-                trade_direction = 'BUY'
-                trade_rate = rates[trade_pair]
-                trade_amount = to_buy_amount_cur
-            else:
-                trade_pair = "{}/{}".format(to_sell_cur, to_buy_cur)
-                if trade_pair in rates:
-                    trade_direction = 'SELL'
-                    trade_rate = rates[trade_pair]
-                    trade_amount = to_sell_amount_cur
-                else:
-                    raise ValueError("Invalid pair")
+                        to_sell_amount_cur = trade_amount_base / rates[to_sell_pair_base]
+                        to_buy_amount_cur = trade_amount_base / rates[to_buy_pair_base]
 
-            if trade_pair not in pairs_processed:
-                orders.append(Order(trade_pair, trade_direction,
-                                    trade_amount, trade_rate))
-                pairs_processed.add(trade_pair)
+                        trade_direction = None
+                        # try and see if we have the pair we need
+                        # and if so, buy it
+                        pair = "{}/{}".format(p_cur, n_cur)
+                        if pair in rates:
+                            trade_direction = "BUY"
+                            trade_pair = pair
+                            trade_amount = to_buy_amount_cur
+                        # if previous failed then reverse paid and try
+                        # sell instead
+                        pair = "{}/{}".format(n_cur, p_cur)
+                        if pair in rates:
+                            trade_direction = "SELL"
+                            trade_pair = pair
+                            trade_amount = to_sell_amount_cur
+                        if trade_direction:
+                            trade_rate = rates[trade_pair]
+                            order = Order(trade_pair, trade_direction,
+                                          trade_amount, trade_rate)
 
-            new_amounts[to_sell_cur] -= to_sell_amount_cur
-            new_amounts[to_buy_cur] += to_buy_amount_cur
+                            new_amounts[p_cur] += to_buy_amount_cur
+                            new_amounts[n_cur] -= to_sell_amount_cur
 
+                            break
+
+                if order and trade_pair not in pairs_processed:
+                    orders.append(order)
+                    pairs_processed.add(trade_pair)
+                    total_fee += trade_amount_base * (fee/100.0)
+
+            import pdb; pdb.set_trace()
+            if not [x for x in differences.values() if x != 0]:
+                attempts.append((total_fee, orders))
+
+        import pdb; pdb.set_trace()
         return {'orders': orders, 'amounts': new_amounts}
 
     def needs_balancing(self, amounts, rates):

@@ -469,6 +469,55 @@ class test_SimpleBalancer(unittest.TestCase):
             self.assertAlmostEqual(targets[cur],
                                    (base_amounts[cur] / total_base) * 100)
 
+    def test_real2_nondirect(self):
+
+        targets = {'XRP': 40,
+                   'XLM': 20,
+                   'BTC': 20,
+                   'ETH': 10,
+                   'USDT': 10, }
+        current = {'XRP': 3352,
+                   'XLM': 0,
+                   'BTC': 0,
+                   'ETH': 0,
+                   'USDT': 243, }
+        base = "USDT"
+        rates = {'XRP/USDT': 0.32076,
+                 'XLM/USDT': 0.09084,
+                 'XRP/BTC': 0.00008102,
+                 'XRP/ETH': 0.00217366,
+                 'BTC/USDT': 3968.13,
+                 'ETH/USDT': 147.81,
+                 }
+
+        balancer = SimpleBalancer(targets, base)
+
+        current_percentages = balancer.calc_cur_percentage(current, rates)
+        expected = {'USDT': 18.434403020292592,
+                    'BTC': 0,
+                    'ETH': 0,
+                    'XLM': 0.0,
+                    'XRP': 81.56559697970741}
+        self.assertEqual(current_percentages, expected)
+
+        import pdb; pdb.set_trace()
+        res = balancer(current, rates)
+        # Test the orders we get are correct
+        expected = [Order('XRP/BTC', 'SELL', 821.9151515151515, 0.00008102),
+                    Order('ETH/USDT', 'BUY', 0.7521902983559976, 147.81),
+                    Order('XRP/ETH', 'SELL', 64.3393939393937, 0.00217366), ]
+        self.assertEqual(res['orders'], expected)
+
+        # Test that the final amounts are in proportion to the targets
+        base_amounts = {}
+        for cur in res['amounts']:
+            pair = "{}/{}".format(cur, base)
+            base_amounts[cur] = res['amounts'][cur] * rates[pair]
+        total_base = sum(base_amounts.values())
+        for cur in targets:
+            self.assertAlmostEqual(targets[cur],
+                                   (base_amounts[cur] / total_base) * 100)
+
     def test_badpair1(self):
 
         targets = {'XRP': 40,
