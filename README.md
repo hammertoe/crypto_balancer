@@ -9,7 +9,7 @@ A script that can connect to a cryptocurrency exchange and buy/sell cryptocurren
 ## Install
 
 ```
-$ virtualenv . -python=python3
+$ virtualenv --python=python3 .
 $ . bin/activate
 $ pip install -r requirements.txt
 $ pip install -e .
@@ -118,3 +118,12 @@ Order too small to process: BUY 0.01895191961729272 ETH/USDT @ 138.325
 Order too small to process: BUY 1.8787227415645225 XRP/USDT @ 0.30084500000000003
 Order too small to process: BUY 0.17115863297709613 XRP/BTC @ 7.965500000000001e-05
 ```
+
+You can set this to run in a cron job on a unix system by running something along the lines of (adjust for your path and email address):
+
+```
+MAILTO=matt@example.com
+*/5 * * * * OUTPUT=`cd /home/matt/crypto_balancer; bin/crypto_balancer --trade binance`; echo "$OUTPUT" | grep -q "No balancing needed" || echo "$OUTPUT"
+```
+
+This will run the script every 5 minutes, and will email you only if some balancing (or an error) occurs.
