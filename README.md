@@ -119,7 +119,10 @@ Order too small to process: BUY 1.8787227415645225 XRP/USDT @ 0.3008450000000000
 Order too small to process: BUY 0.17115863297709613 XRP/BTC @ 7.965500000000001e-05
 ```
 
-You can set this to run in a cron job on a unix system by running something along the lines of (adjust for your path and email address):
+## Running automatically
+
+You can set this to run in a cron job on a unix system by putting something along the lines of (adjust for your path and email address) below
+in your crontab file:
 
 ```
 MAILTO=matt@example.com
