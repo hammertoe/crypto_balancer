@@ -1,11 +1,10 @@
 import argparse
-import ccxt
 import configparser
 import logging
 import sys
 
 from crypto_balancer.simple_balancer import SimpleBalancer
-from crypto_balancer.execute import execute_order
+from crypto_balancer.ccxt_exchange import CCXTExchange, exchanges
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +14,7 @@ def main(args=None):
     config.read('config.ini')
 
     def exchange_choices():
-        return set(config.sections()) & set(ccxt.exchanges)
+        return set(config.sections()) & set(exchanges)
 
     parser = argparse.ArgumentParser(
         description='Balance holdings on an exchange.')
@@ -43,15 +42,14 @@ def main(args=None):
                      .format(total_target))
         sys.exit(1)
 
-    exch = getattr(ccxt, args.exchange)({'nonce': ccxt.Exchange.milliseconds})
-    exch.apiKey = config['api_key']
-    exch.secret = config['api_secret']
-    exch.load_markets()
-
+    exch = CCXTExchange(args.exchange,
+                        config['api_key'],
+                        config['api_secret'])
+    
     print("Connected to exchange: {}".format(exch.name))
     print()
 
-    raw_balances = exch.fetch_balance()
+    raw_balances = exch.balance()
     balances = {}
     print("Balances:")
     for cur in targets:
@@ -60,8 +58,8 @@ def main(args=None):
 
     print()
 
-    rates = fetch_rates(exch, targets.keys())
-    fee = exch.fees['trading']['maker']
+    rates = exch.rates(targets.keys())
+    fee = exch.fees()
     balancer = SimpleBalancer(targets, args.valuebase, fee,
                               threshold=float(config['threshold']))
 
@@ -92,13 +90,13 @@ def main(args=None):
         print()
         if args.trade:
             for order in orders['orders']:
-                limits = exch.markets[order.pair]['limits']
+                limits = exch.limits(order.pair)
                 if order.amount < limits['amount']['min'] \
                    or order.amount * order.price < limits['cost']['min']:
                     print("Order too small to process: {}".format(order))
                     continue
                 try:
-                    res = execute_order(exch, order)
+                    res = exch.execute_order(order)
                     print("Order placed: {} {} {} @ {} "
                           .format(res['symbol'], res['side'],
                                   res['amount'], res['price']))
@@ -107,26 +105,6 @@ def main(args=None):
         else:
             print("No trades placed, as '--trade' not given on command line")
 
-
-def fetch_rates(exch, curs):
-    pairs = []
-
-    for i in curs:
-        for j in curs:
-            pair = "{}/{}".format(i, j)
-            if pair in exch.markets:
-                pairs.append(pair)
-
-    rates = {}
-    for pair in pairs:
-        orderbook = exch.fetchOrderBook(pair)
-        high = orderbook['asks'][0][0]
-        low = orderbook['bids'][0][0]
-        mid = (high + low)/2.0
-        rates[pair] = mid
-
-    return rates
-
-
+            
 if __name__ == '__main__':
     main()
