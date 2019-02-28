@@ -86,3 +86,24 @@ class DummyExchange():
            or order.amount * order.price < limits['cost']['min']:
             return False
         return True
+
+    def execute_order(self, order):
+        base, quote = order.pair.split('/')
+        if order.direction.upper() == 'BUY':
+            if order.amount * order.price > self._balances[quote]:
+                raise ValueError("Can't overdraw")
+            self._balances[base] += order.amount
+            self._balances[base] -= order.amount * self.fee
+            self._balances[quote] -= order.amount * order.price
+
+        if order.direction.upper() == 'SELL':
+            if order.amount > self._balances[base]:
+                raise ValueError("Can't overdraw")
+            self._balances[base] -= order.amount
+            self._balances[quote] += order.amount * order.price
+            self._balances[quote] -= order.amount * order.price * self.fee
+
+        return {'symbol': order.pair,
+                'side': order.direction.upper(),
+                'amount': order.amount,
+                'price': order.price}
