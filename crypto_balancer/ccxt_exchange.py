@@ -1,6 +1,8 @@
 import ccxt
 import configparser
 
+from functools import lru_cache
+
 from crypto_balancer.exceptions import OrderTooSmallException
 
 exchanges = ccxt.exchanges
@@ -17,11 +19,13 @@ class CCXTExchange():
         self.exch.load_markets()
 
     @property
+    @lru_cache(maxsize=None)
     def balances(self):
         bals = self.exch.fetch_balance()['total']
         return { k:bals[k] for k in self.currencies }
 
     @property
+    @lru_cache(maxsize=None)
     def pairs(self):
         _pairs = []
         for i in self.currencies:
@@ -32,9 +36,10 @@ class CCXTExchange():
         return _pairs
 
     @property
+    @lru_cache(maxsize=None)
     def rates(self):
         _rates = {}
-        for pair in self.pairs
+        for pair in self.pairs:
             orderbook = self.exch.fetchOrderBook(pair)
             high = orderbook['asks'][0][0]
             low = orderbook['bids'][0][0]
@@ -44,11 +49,13 @@ class CCXTExchange():
         return _rates
 
     @property
+    @lru_cache(maxsize=None)
     def limits(self):
         return {pair: exch.markets[pair]['limits'] \
                   for pair in self.pairs}
 
     @property
+    @lru_cache(maxsize=None)
     def fee(self):
         return self.exch.fees['trading']['maker']
     

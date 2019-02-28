@@ -5,6 +5,8 @@ import sys
 
 from crypto_balancer.simple_balancer import SimpleBalancer
 from crypto_balancer.ccxt_exchange import CCXTExchange, exchanges
+from crypto_balancer.executor import Executor
+from crypto_balancer.portfolio import Portfolio
 
 logger = logging.getLogger(__name__)
 
@@ -42,68 +44,53 @@ def main(args=None):
                      .format(total_target))
         sys.exit(1)
 
-    exch = CCXTExchange(args.exchange,
+    exchange = CCXTExchange(args.exchange,
                         targets.keys(),
                         config['api_key'],
                         config['api_secret'])
     
-    print("Connected to exchange: {}".format(exch.name))
+    print("Connected to exchange: {}".format(exchange.name))
     print()
 
-    balances = exch.balances()
+    portfolio = Portfolio(targets, exchange)
+
     print("Balances:")
-    for cur in targets:
-        print("  {} {}".format(cur, balances[cur]))
+    for cur,bal in portfolio.balances.items():
+        print("  {} {}".format(cur, bal))
 
     print()
-
-    rates = exch.rates()
-    fee = exch.fees()
-    balancer = SimpleBalancer(targets, args.valuebase, fee,
-                              threshold=float(config['threshold']))
-
-    base_values = balancer.calc_base_values(balances, rates)
-    total_base_value = sum(base_values.values())
-
+    
     print("Porfolio value:")
-    for cur in base_values:
-        bv = base_values[cur]
-        pc = (bv / total_base_value) * 100
-        print("  {} {} ({:.2f} / {:.2f}%)".format(cur, bv, pc, targets[cur]))
+    for cur,pct in portfolio.balances_pct.items():
+        print("  {} ({:.2f} / {:.2f}%)".format(cur, pct, targets[cur]))
 
-    print("Total value: {:.2f} {}".format(total_base_value, args.valuebase))
+    print("Total value: {:.2f} {}".format(portfolio.valuation_quote,
+                                          portfolio.quote_currency))
     print()
 
-    orders = balancer(balances, rates, force=args.force)
+    balancer = SimpleBalancer()
 
-    if not orders['orders']:
+    executor = Executor(portfolio, exchange, balancer)
+    
+    res = executor.run(force=args.force, trade=args.trade)
+
+    if not res['orders']:
         print("No balancing needed")
     else:
         print("Balancing needed:")
-        for order in orders['orders']:
+        for order in res['orders']:
             print("  " + str(order))
-        total_fee = '%s' % float('%.4g' % orders['total_fee'])
+        total_fee = '%s' % float('%.4g' % res['total_fee'])
         print("Total fees to re-balance: {} {}".format(total_fee,
-                                                       args.valuebase))
+                                                       portfolio.quote_currency))
 
         print()
         if args.trade:
-            for order in orders['orders']:
-                limits = exch.limits(order.pair)
-                if order.amount < limits['amount']['min'] \
-                   or order.amount * order.price < limits['cost']['min']:
-                    print("Order too small to process: {}".format(order))
-                    continue
-                try:
-                    res = exch.execute_order(order)
-                    print("Order placed: {} {} {} @ {} "
-                          .format(res['symbol'], res['side'],
-                                  res['amount'], res['price']))
-                except Exception:
-                    logger.error("Could not place order: {}".format(order))
-        else:
-            print("No trades placed, as '--trade' not given on command line")
+            for order in res['success']:
+                print("Success: {}".format(order))
 
+            for order in res['errors']:
+                print("Failed: {}".format(order))
             
 if __name__ == '__main__':
     main()

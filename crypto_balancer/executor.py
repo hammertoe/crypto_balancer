@@ -1,4 +1,9 @@
+import logging
 import sys
+
+from crypto_balancer.exceptions import OrderTooSmallException
+
+logger = logging.getLogger(__name__)
 
 class Executor():
 
@@ -13,6 +18,7 @@ class Executor():
         balances = self.portfolio.balances
 
         res = {'orders': [],
+               'success': [],
                'errors': [],
                'balances': balances,
                'total_fee': 0.0,
@@ -28,8 +34,8 @@ class Executor():
                 if trade:
                     for order in orders['orders']:
                         try:
-                            r = exch.execute_order(order)
-                            res['orders'].append(Order(r['symbol'], r['side'],
+                            r = self.exchange.execute_order(order)
+                            res['success'].append(Order(r['symbol'], r['side'],
                                                        r['amount'], r['price']))
                         except OrderTooSmallException:
                             res['errors'].append(order)
