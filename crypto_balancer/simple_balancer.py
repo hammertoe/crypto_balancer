@@ -3,98 +3,99 @@ from random import shuffle, choice
 
 
 class SimpleBalancer():
-    def __init__(self, targets, base, fee=0.001, rounds=6, attempts=10000, threshold=1):
-        self.targets = targets
-        self.base = base
-        self.fee = fee
+    def __init__(self, rounds=6, attempts=10000):
         self.rounds = rounds
         self.attempts = attempts
-        self.threshold = threshold
 
-    def __call__(self, amounts, rates, force=False):
-        new_amounts = amounts.copy()
+    def balance(self, portfolio, exchange):
         pairs_processed = set()
         attempts = []
+        rates = exchange.rates
+        quote_currency = portfolio.quote_currency
 
-        # exit if don't need to balance and not forcing
-        if not self.needs_balancing(new_amounts, rates) and not force:
-            return {'orders': [], 'amounts': new_amounts}
-
-        rates["{}/{}".format(self.base, self.base)] = 1.0
+        # Add in the identify rate just so we don't have to special
+        # case it later 
+        rates["{}/{}".format(quote_currency, quote_currency)] = 1.0
 
         # We brute force try a number of attempts to balance
         for _ in range(self.attempts):
             total_fee = 0.0
-            new_amounts = amounts.copy()
+            portfolio.sync_balances()
             pairs_processed = set()
             orders = []
+            last_differences = []
 
             for i in range(self.rounds):
-                differences = self.calc_base_differences(new_amounts, rates)
+                differences = sorted(portfolio.differences_quote.items())
 
+                # not making progress, so break
+                if differences == last_differences:
+                    break
+
+                # keep track of last one so we can see if making progress
+                last_differences = differences
+                
                 # Find all the currencies that need to increase their
                 # percentages of the portfolio and those that need to decrease
-                positives = [x for x in differences.items() if x[1] > 0]
-                negatives = [x for x in differences.items() if x[1] < 0]
+                positives = [x for x in differences if x[1] > 0]
+                negatives = [x for x in differences if x[1] < 0]
 
-                # Shuffle them so we try them in different orders
-                shuffle(positives)
-                shuffle(negatives)
-
+                # Nothing here so break early
+                if not (positives and negatives):
+                    break
+                
                 order = None
 
-                # Loop through trying different combinations
-                for p_cur, p_amount in positives:
-                    for n_cur, n_amount in negatives:
-                        # if we already have an order, nothing to do
-                        if order:
-                            break
+                # pick random positive and negative to match
+                p_cur, p_amount = choice(positives)
+                n_cur, n_amount = choice(negatives)
 
-                        # randomly choose to fulfil the most from the
-                        # source or dest
-                        trade_amount_base = choice([p_amount, -n_amount])
+                # randomly choose to fulfil the most from the
+                # source or dest
+                trade_amount_quote = choice([p_amount, -n_amount])
 
-                        # Work out the pair to get to the base currency
-                        to_sell_pair_base = "{}/{}".format(n_cur, self.base)
-                        to_buy_pair_base = "{}/{}".format(p_cur, self.base)
+                # Work out the pair to get to the quote currency
+                to_sell_pair_quote = "{}/{}".format(n_cur, quote_currency)
+                to_buy_pair_quote = "{}/{}".format(p_cur, quote_currency)
 
-                        # Work out how much of the currency to buy/sell
-                        to_sell_amount_cur = \
-                            trade_amount_base / rates[to_sell_pair_base]
-                        to_buy_amount_cur = \
-                            trade_amount_base / rates[to_buy_pair_base]
+                # Work out how much of the currency to buy/sell
+                to_sell_amount_cur = \
+                    trade_amount_quote / rates[to_sell_pair_quote]
+                to_buy_amount_cur = \
+                    trade_amount_quote / rates[to_buy_pair_quote]
 
-                        trade_direction = None
+                trade_direction = None
 
-                        # try and see if we have the pair we need
-                        # and if so, buy it
-                        pair = "{}/{}".format(p_cur, n_cur)
-                        if pair in rates:
-                            trade_direction = "BUY"
-                            trade_pair = pair
-                            trade_amount = to_buy_amount_cur
+                # try and see if we have the pair we need
+                # and if so, buy it
+                pair = "{}/{}".format(p_cur, n_cur)
+                if pair in rates:
+                    trade_direction = "BUY"
+                    trade_pair = pair
+                    trade_amount = to_buy_amount_cur
 
-                        # if previous failed then reverse paid and try
-                        # sell instead
-                        pair = "{}/{}".format(n_cur, p_cur)
-                        if pair in rates:
-                            trade_direction = "SELL"
-                            trade_pair = pair
-                            trade_amount = to_sell_amount_cur
+                # if previous failed then reverse paid and try
+                # sell instead
+                pair = "{}/{}".format(n_cur, p_cur)
+                if pair in rates:
+                    trade_direction = "SELL"
+                    trade_pair = pair
+                    trade_amount = to_sell_amount_cur
 
-                        # We got a direction, so we know we can either
-                        # buy or sell this pair
-                        if trade_direction:
-                            trade_rate = rates[trade_pair]
-                            order = Order(trade_pair, trade_direction,
-                                          trade_amount, trade_rate)
+                # We got a direction, so we know we can either
+                # buy or sell this pair
+                if trade_direction:
+                    # Adjust the amounts of each currency we hold
+                    portfolio.balances[p_cur] += to_buy_amount_cur
+                    portfolio.balances[n_cur] -= to_sell_amount_cur
 
-                            # Adjust the amounts of each currency we hold
-                            new_amounts[p_cur] += to_buy_amount_cur
-                            new_amounts[n_cur] -= to_sell_amount_cur
+                    if  portfolio.balances[n_cur] < 0:
+                        # gone negative so not valid result
+                        break
 
-                            # we are done so break
-                            break
+                    trade_rate = rates[trade_pair]
+                    order = Order(trade_pair, trade_direction,
+                                  trade_amount, trade_rate)
 
                 # if we have not already processed this pair then add
                 # the order to list of orders to execute and note the
@@ -103,60 +104,21 @@ class SimpleBalancer():
                     orders.append(order)
                     pairs_processed.add(trade_pair)
                     # keep track of the total fee of these orders
-                    total_fee += trade_amount_base * self.fee
-
+                    total_fee += trade_amount_quote * exchange.fee
+                    
             # Check the at the end we have no differences outstanding
-            # and that none of the new amounts have gone negative
-            if not [x for x in differences.values() if abs(x) > 1e-3] \
-               and not [x for x in new_amounts.values() if x < 0]:
-                attempts.append((total_fee, orders, new_amounts))
+            if orders and not [cur for (cur,diff) in differences if abs(diff) > 1e-3]:
+                attempts.append((total_fee, orders, portfolio.balances))
 
-        # sort our attempts so the lowest price one is first
-        attempts.sort(key=lambda x: x[:2])
-        total_fee, orders, new_amounts = attempts[0]
-        return {'orders': orders, 'amounts': new_amounts,
+        if attempts:
+            # sort our attempts so the lowest price one is first
+            attempts.sort(key=lambda x: x[:2])
+            total_fee, orders, balances = attempts[0]
+        else:
+            total_fee, orders, balances = 0, [], portfolio.balances
+            
+        return {'orders': orders,
+                'amounts': balances,
                 'total_fee': total_fee}
 
-    def needs_balancing(self, amounts, rates):
-        current_percentages = self.calc_cur_percentage(amounts, rates)
-        for cur in self.targets:
-            if abs(self.targets[cur] - current_percentages[cur]) \
-               > self.threshold:
-                return True
-        return False
 
-    def calc_base_values(self, amounts, rates):
-        base_values = {}
-        for cur, amount in amounts.items():
-            if cur == self.base:
-                base_values[cur] = amount
-            else:
-                pair = "{}/{}".format(cur, self.base)
-                if pair not in rates:
-                    raise ValueError("Invalid pair: {}".format(pair))
-                base_values[cur] = amount * rates[pair]
-
-        return base_values
-
-    def calc_cur_percentage(self, amounts, rates):
-        # first convert the amounts into their base value
-        base_values = self.calc_base_values(amounts, rates)
-        current_percentages = {}
-        total_base_value = sum(base_values.values())
-        for cur, base_value in base_values.items():
-            if total_base_value:
-                current_percentages[cur] = (base_value/total_base_value) * 100
-            else:
-                current_percentages[cur] = 0
-
-        return current_percentages
-
-    def calc_base_differences(self, amounts, rates):
-        # first convert the amounts into their base value
-        base_values = self.calc_base_values(amounts, rates)
-        differences = {}
-        total_base_value = sum(base_values.values())
-        for cur in base_values:
-            differences[cur] = (total_base_value*(self.targets[cur]/100.0)) \
-                               - base_values[cur]
-        return differences

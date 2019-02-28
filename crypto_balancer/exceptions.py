@@ -1,0 +1,3 @@
+class OrderTooSmallException(Exception):
+    pass
+

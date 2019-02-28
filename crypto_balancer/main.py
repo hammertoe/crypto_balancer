@@ -43,22 +43,21 @@ def main(args=None):
         sys.exit(1)
 
     exch = CCXTExchange(args.exchange,
+                        targets.keys(),
                         config['api_key'],
                         config['api_secret'])
     
     print("Connected to exchange: {}".format(exch.name))
     print()
 
-    raw_balances = exch.balance()
-    balances = {}
+    balances = exch.balances()
     print("Balances:")
     for cur in targets:
-        balances[cur] = raw_balances[cur]['total']
         print("  {} {}".format(cur, balances[cur]))
 
     print()
 
-    rates = exch.rates(targets.keys())
+    rates = exch.rates()
     fee = exch.fees()
     balancer = SimpleBalancer(targets, args.valuebase, fee,
                               threshold=float(config['threshold']))
