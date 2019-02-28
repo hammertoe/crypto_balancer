@@ -1,5 +1,5 @@
 from crypto_balancer.order import Order
-from random import shuffle, choice
+from random import choice
 
 
 class SimpleBalancer():
@@ -14,7 +14,7 @@ class SimpleBalancer():
         quote_currency = portfolio.quote_currency
 
         # Add in the identify rate just so we don't have to special
-        # case it later 
+        # case it later
         rates["{}/{}".format(quote_currency, quote_currency)] = 1.0
 
         # We brute force try a number of attempts to balance
@@ -34,7 +34,7 @@ class SimpleBalancer():
 
                 # keep track of last one so we can see if making progress
                 last_differences = differences
-                
+
                 # Find all the currencies that need to increase their
                 # percentages of the portfolio and those that need to decrease
                 positives = [x for x in differences if x[1] > 0]
@@ -43,7 +43,7 @@ class SimpleBalancer():
                 # Nothing here so break early
                 if not (positives and negatives):
                     break
-                
+
                 order = None
 
                 # pick random positive and negative to match
@@ -84,41 +84,44 @@ class SimpleBalancer():
 
                 # We got a direction, so we know we can either
                 # buy or sell this pair
-                if trade_direction:
-                    # Adjust the amounts of each currency we hold
-                    portfolio.balances[p_cur] += to_buy_amount_cur
-                    portfolio.balances[n_cur] -= to_sell_amount_cur
-
-                    if  portfolio.balances[n_cur] < 0:
-                        # gone negative so not valid result
-                        break
-
+                if trade_direction and trade_pair not in pairs_processed:
                     trade_rate = rates[trade_pair]
                     order = Order(trade_pair, trade_direction,
                                   trade_amount, trade_rate)
 
-                # if we have not already processed this pair then add
-                # the order to list of orders to execute and note the
-                # pair so we don't try and use it again
-                if order and trade_pair not in pairs_processed:
+                    if not exchange.validate_order(order):
+                        continue
+
+                    # Adjust the amounts of each currency we hold
+                    portfolio.balances[p_cur] += to_buy_amount_cur
+                    portfolio.balances[n_cur] -= to_sell_amount_cur
+
+                    if portfolio.balances[n_cur] < 0:
+                        # gone negative so not valid result
+                        break
+
+                    # if we have not already processed this pair then add
+                    # the order to list of orders to execute and note the
+                    # pair so we don't try and use it again
                     orders.append(order)
                     pairs_processed.add(trade_pair)
                     # keep track of the total fee of these orders
                     total_fee += trade_amount_quote * exchange.fee
-                    
+
             # Check the at the end we have no differences outstanding
-            if orders and not [cur for (cur,diff) in differences if abs(diff) > 1e-3]:
-                attempts.append((total_fee, orders, portfolio.balances))
+            if orders:
+                # calculate avg deviation of differences
+                attempts.append((portfolio.balance_metric, total_fee,
+                                 orders, portfolio.balances))
 
         if attempts:
             # sort our attempts so the lowest price one is first
-            attempts.sort(key=lambda x: x[:2])
-            total_fee, orders, balances = attempts[0]
+            attempts.sort(key=lambda x: x[:3])
+            dev, total_fee, orders, balances = attempts[0]
         else:
-            total_fee, orders, balances = 0, [], portfolio.balances
-            
+            dev, total_fee, orders, balances = 0, 0, [], portfolio.balances
+
         return {'orders': orders,
                 'amounts': balances,
-                'total_fee': total_fee}
-
-
+                'total_fee': total_fee,
+                'dev': dev}

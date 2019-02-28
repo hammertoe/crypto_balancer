@@ -45,23 +45,23 @@ def main(args=None):
         sys.exit(1)
 
     exchange = CCXTExchange(args.exchange,
-                        targets.keys(),
-                        config['api_key'],
-                        config['api_secret'])
-    
+                            targets.keys(),
+                            config['api_key'],
+                            config['api_secret'])
+
     print("Connected to exchange: {}".format(exchange.name))
     print()
 
     portfolio = Portfolio(targets, exchange)
 
     print("Balances:")
-    for cur,bal in portfolio.balances.items():
+    for cur, bal in portfolio.balances.items():
         print("  {} {}".format(cur, bal))
 
     print()
-    
+
     print("Porfolio value:")
-    for cur,pct in portfolio.balances_pct.items():
+    for cur, pct in portfolio.balances_pct.items():
         print("  {} ({:.2f} / {:.2f}%)".format(cur, pct, targets[cur]))
 
     print("Total value: {:.2f} {}".format(portfolio.valuation_quote,
@@ -69,9 +69,7 @@ def main(args=None):
     print()
 
     balancer = SimpleBalancer()
-
     executor = Executor(portfolio, exchange, balancer)
-    
     res = executor.run(force=args.force, trade=args.trade)
 
     if not res['orders']:
@@ -81,8 +79,9 @@ def main(args=None):
         for order in res['orders']:
             print("  " + str(order))
         total_fee = '%s' % float('%.4g' % res['total_fee'])
-        print("Total fees to re-balance: {} {}".format(total_fee,
-                                                       portfolio.quote_currency))
+        print("Total fees to re-balance: {} {}"
+              .format(total_fee,
+                      portfolio.quote_currency))
 
         print()
         if args.trade:
@@ -91,6 +90,7 @@ def main(args=None):
 
             for order in res['errors']:
                 print("Failed: {}".format(order))
-            
+
+
 if __name__ == '__main__':
     main()

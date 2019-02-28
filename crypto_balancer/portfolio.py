@@ -1,6 +1,7 @@
 class Portfolio():
 
-    def __init__(self, targets, exchange, threshold=1.0, quote_currency="USDT"):
+    def __init__(self, targets, exchange, threshold=1.0,
+                 quote_currency="USDT"):
         self.targets = targets
         self.threshold = threshold
         self.exchange = exchange
@@ -13,7 +14,7 @@ class Portfolio():
 
     def sync_rates(self):
         self.rates = self.exchange.rates.copy()
-        
+
     @property
     def currencies(self):
         return self.targets.keys()
@@ -31,7 +32,7 @@ class Portfolio():
                 _balances_quote[cur] = amount * self.rates[pair]
 
         return _balances_quote
-    
+
     @property
     def valuation_quote(self):
         return sum(self.balances_quote.values())
@@ -49,22 +50,43 @@ class Portfolio():
     def balances_pct(self):
         # first convert the amounts into their base value
         _balances_quote = self.balances_quote
-        _valuation_quote = self.valuation_quote
+        _total = self.valuation_quote
 
-        def _calc_pct(cur):
-            if _valuation_quote:
-                return (_balances_quote[cur] / _valuation_quote) * 100.0
+        def calc_diff(cur):
+            return _total*(self.targets[cur]/100.0) \
+                - _balances_quote[cur]
+
+        if not _total:
+            return {cur: 0 for cur in self.currencies}
+
+        return {cur: (_balances_quote[cur] / _total) * 100.0
+                for cur in self.currencies}
+
+    @property
+    def balance_metric(self):
+        _total = self.valuation_quote
+        _balances_quote = self.balances_quote
+
+        if not _total:
             return 0
-        
-        return {cur: _calc_pct(cur) for cur in self.currencies}
+
+        def calc_diff(cur):
+            return _total*(self.targets[cur]/100.0) \
+                - _balances_quote[cur]
+
+        pcts = [calc_diff(cur) / _total
+                for cur in self.currencies]
+        dev = sum([x**2 for x in pcts]) / len(pcts)
+        return dev
 
     @property
     def differences_quote(self):
         # first convert the amounts into their base value
-        _total = self.valuation_quote
         _balances_quote = self.balances_quote
-        _diff = lambda cur: _total*(self.targets[cur]/100.0) \
-                - _balances_quote[cur]
-        return {cur: _diff(cur) for cur in self.currencies}
+        _total = self.valuation_quote
 
-    
+        def calc_diff(cur):
+            return _total*(self.targets[cur]/100.0) \
+                - _balances_quote[cur]
+
+        return {cur: calc_diff(cur) for cur in self.currencies}

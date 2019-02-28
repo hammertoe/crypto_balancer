@@ -1,6 +1,6 @@
 class Order():
     def __init__(self, pair, direction, amount, price):
-        if direction not in ['BUY', 'SELL']:
+        if direction.upper() not in ['BUY', 'SELL']:
             raise ValueError("{} is not a valid direction".format(direction))
         self.pair = pair
         self.direction = direction

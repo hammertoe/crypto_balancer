@@ -52,12 +52,16 @@ class test_Portfolio(unittest.TestCase):
                'USDT': 10, }
 
     targets2 = {'XRP': 40,
-               'XLM': 40,
-               'USDT': 20, }
-    
+                'XLM': 40,
+                'USDT': 20, }
+
     balances = {'XRP': 450,
                 'XLM': 450,
                 'USDT': 100, }
+
+    zero_balances = {'XRP': 0,
+                     'XLM': 0,
+                     'USDT': 0, }
 
     def test_create_portfolio_defaults(self):
         exchange = DummyExchange(self.targets.keys(), self.targets)
@@ -76,12 +80,6 @@ class test_Portfolio(unittest.TestCase):
         self.assertEqual(portfolio.quote_currency, 'BTC')
         self.assertEqual(portfolio.exchange, exchange)
         self.assertEqual(portfolio.targets, self.targets)
-        
-    def test_create_portfolio_balances_quote(self):
-        exchange = DummyExchange(self.targets.keys(), self.balances)
-        portfolio = Portfolio(self.targets, exchange)
-
-        self.assertEqual(portfolio.balances_quote, self.balances)
 
     def test_create_portfolio_balances_quote(self):
         exchange = DummyExchange(self.targets.keys(), self.balances)
@@ -102,6 +100,31 @@ class test_Portfolio(unittest.TestCase):
         self.assertEqual(portfolio.balances_pct, self.targets)
         self.assertNotEqual(portfolio.balances_pct, self.targets2)
 
+    def test_create_portfolio_balances_pct_zero(self):
+        exchange = DummyExchange(self.targets.keys(), self.zero_balances)
+        portfolio = Portfolio(self.targets, exchange)
+
+        self.assertEqual(portfolio.balances_pct, self.zero_balances)
+        self.assertNotEqual(portfolio.balances_pct, self.targets)
+
+    def test_create_portfolio_metric1(self):
+        exchange = DummyExchange(self.targets.keys(), self.balances)
+        portfolio = Portfolio(self.targets, exchange)
+
+        self.assertEqual(portfolio.balance_metric, 0)
+
+    def test_create_portfolio_metric2(self):
+        exchange = DummyExchange(self.targets.keys(), self.balances)
+        portfolio = Portfolio(self.targets2, exchange)
+
+        self.assertAlmostEqual(portfolio.balance_metric, 0.005)
+
+    def test_create_portfolio_metric_zero(self):
+        exchange = DummyExchange(self.targets.keys(), self.zero_balances)
+        portfolio = Portfolio(self.targets, exchange)
+
+        self.assertEqual(portfolio.balance_metric, 0)
+
     def test_create_portfolio_differences_quote1(self):
         exchange = DummyExchange(self.targets.keys(), self.balances)
         portfolio = Portfolio(self.targets, exchange)
@@ -109,7 +132,7 @@ class test_Portfolio(unittest.TestCase):
         expected = {'XRP': 0,
                     'XLM': 0,
                     'USDT': 0, }
-                    
+
         self.assertEqual(portfolio.differences_quote, expected)
 
     def test_create_portfolio_differences_quote2(self):
@@ -148,7 +171,6 @@ class test_Portfolio(unittest.TestCase):
         current = {'XRP': 100,
                    'XLM': 100,
                    'USDT': 50, }
-        base = "USDT"
         rates = {'XRP/USDT': 0.1,
                  'XLM/USDT': 0.4, }
 
@@ -169,9 +191,10 @@ class test_Portfolio(unittest.TestCase):
         current = {'XRP': 100,
                    'XLM': 100,
                    'USDT': 50, }
-        base = "USDT"
         rates = {'XRP/USDT': 0.1,
-                 'XLM/USDT': 0.4, }
+                 'XLM/USDT': 0.4,
+                 'USDT/USDT': 1.0, }
+
         exchange = DummyExchange(targets.keys(), current, rates)
         portfolio = Portfolio(targets, exchange)
 
@@ -185,11 +208,8 @@ class test_Portfolio(unittest.TestCase):
         final_targets = {}
         total_base = 0
         for cur in current:
-            if cur == base:
-                final_base[cur] = current[cur]
-            else:
-                symbol = "{}/{}".format(cur, base)
-                final_base[cur] = current[cur] * rates[symbol]
+            symbol = "{}/{}".format(cur, portfolio.quote_currency)
+            final_base[cur] = current[cur] * exchange.rates[symbol]
             final_base[cur] += portfolio.differences_quote[cur]
             total_base += final_base[cur]
 
@@ -206,9 +226,10 @@ class test_Portfolio(unittest.TestCase):
         current = {'XRP': 40,
                    'XLM': 40,
                    'USDT': 20, }
-        base = "USDT"
         rates = {'XRP/USDT': 0.5,
-                 'XLM/USDT': 0.5, }
+                 'XLM/USDT': 0.5,
+                 'USDT/USDT': 1.0, }
+
         exchange = DummyExchange(targets.keys(), current, rates)
         portfolio = Portfolio(targets, exchange)
 
@@ -223,11 +244,8 @@ class test_Portfolio(unittest.TestCase):
         final_targets = {}
         total_base = 0
         for cur in current:
-            if cur == base:
-                final_base[cur] = current[cur]
-            else:
-                symbol = "{}/{}".format(cur, base)
-                final_base[cur] = current[cur] * rates[symbol]
+            symbol = "{}/{}".format(cur, portfolio.quote_currency)
+            final_base[cur] = current[cur] * exchange.rates[symbol]
             final_base[cur] += portfolio.differences_quote[cur]
             total_base += final_base[cur]
 
@@ -477,7 +495,7 @@ class test_SimpleBalancer(unittest.TestCase):
         expected = [Order('BTC/USDT', 'BUY', 0.028018549795495614, 3968.13),
                     Order('XLM/XRP', 'BUY', 2902.218229854689, 0.283366),
                     Order('XRP/ETH', 'SELL', 410.95757575757574, 0.00217366),
-                    Order('XRP/BTC', 'SELL', 475.29696969696954, 8.102e-05), ]
+                    Order('XRP/BTC', 'SELL', 475.2969696969696, 8.102e-05), ]
         self.assertEqual(res['orders'], expected)
 
         # Test that the final amounts are in proportion to the targets
@@ -514,10 +532,10 @@ class test_SimpleBalancer(unittest.TestCase):
         res = self.execute(targets, current, rates)
         # Test the orders we get are correct
         expected = [Order('ETH/USDT', 'BUY', 0.8918121372031661, 147.81),
-                    Order('XRP/BTC', 'SELL', 821.9151515151515, 8.102e-05),
-                    Order('XRP/USDT', 'SELL', 886.2545454545453, 0.32076),
-                    Order('XLM/USDT', 'BUY', 2902.2182298546886, 0.09084), ]
-
+                    Order('XRP/USDT', 'SELL', 1708.169696969697, 0.32076),
+                    Order('BTC/USDT', 'BUY', 0.06643872655381754, 3968.13),
+                    Order('XLM/USDT', 'BUY', 2902.218229854689, 0.09084), ]
+        
         self.assertEqual(res['orders'], expected)
 
         # Test that the final amounts are in proportion to the targets

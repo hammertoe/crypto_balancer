@@ -1,4 +1,39 @@
-from crypto_balancer.exceptions import OrderTooSmallException
+LIMITS = {'BNB/BTC': {'amount': {'max': 90000000.0, 'min': 0.01},
+                      'cost': {'max': None, 'min': 0.001},
+                      'price': {'max': None, 'min': None}},
+          'BNB/ETH': {'amount': {'max': 90000000.0, 'min': 0.01},
+                      'cost': {'max': None, 'min': 0.01},
+                      'price': {'max': None, 'min': None}},
+          'BNB/USDT': {'amount': {'max': 10000000.0, 'min': 0.01},
+                       'cost': {'max': None, 'min': 10.0},
+                       'price': {'max': None, 'min': None}},
+          'BTC/USDT': {'amount': {'max': 10000000.0, 'min': 1e-06},
+                       'cost': {'max': None, 'min': 10.0},
+                       'price': {'max': None, 'min': None}},
+          'ETH/BTC': {'amount': {'max': 100000.0, 'min': 0.001},
+                      'cost': {'max': None, 'min': 0.001},
+                      'price': {'max': None, 'min': None}},
+          'ETH/USDT': {'amount': {'max': 10000000.0, 'min': 1e-05},
+                       'cost': {'max': None, 'min': 10.0},
+                       'price': {'max': None, 'min': None}},
+          'XRP/BNB': {'amount': {'max': 90000000.0, 'min': 0.1},
+                      'cost': {'max': None, 'min': 1.0},
+                      'price': {'max': None, 'min': None}},
+          'XRP/BTC': {'amount': {'max': 90000000.0, 'min': 1.0},
+                      'cost': {'max': None, 'min': 0.001},
+                      'price': {'max': None, 'min': None}},
+          'XRP/ETH': {'amount': {'max': 90000000.0, 'min': 1.0},
+                      'cost': {'max': None, 'min': 0.01},
+                      'price': {'max': None, 'min': None}},
+          'XRP/USDT': {'amount': {'max': 90000000.0, 'min': 0.1},
+                       'cost': {'max': None, 'min': 1.0},
+                       'price': {'max': None, 'min': None}},
+          'XLM/USDT': {'amount': {'max': 90000000.0, 'min': 0.1},
+                       'cost': {'max': None, 'min': 1.0},
+                       'price': {'max': None, 'min': None}},
+          'XLM/XRP': {'amount': {'max': 90000000.0, 'min': 0.1},
+                      'cost': {'max': None, 'min': 1.0},
+                      'price': {'max': None, 'min': None}}}
 
 
 class DummyExchange():
@@ -27,7 +62,7 @@ class DummyExchange():
     def rates(self):
         if self._rates:
             return self._rates
-        
+
         _rates = {}
         for pair in self.pairs:
             _rates[pair] = 1.0
@@ -35,5 +70,19 @@ class DummyExchange():
         return _rates
 
     @property
+    def limits(self):
+        return LIMITS
+
+    @property
     def fee(self):
         return self._fee
+
+    def validate_order(self, order):
+        try:
+            limits = self.limits[order.pair]
+        except KeyError:
+            return False
+        if order.amount < limits['amount']['min'] \
+           or order.amount * order.price < limits['cost']['min']:
+            return False
+        return True
