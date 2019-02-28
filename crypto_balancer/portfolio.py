@@ -52,10 +52,6 @@ class Portfolio():
         _balances_quote = self.balances_quote
         _total = self.valuation_quote
 
-        def calc_diff(cur):
-            return _total*(self.targets[cur]/100.0) \
-                - _balances_quote[cur]
-
         if not _total:
             return {cur: 0 for cur in self.currencies}
 
