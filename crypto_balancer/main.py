@@ -1,11 +1,12 @@
 import argparse
-import ccxt
 import configparser
 import logging
 import sys
 
 from crypto_balancer.simple_balancer import SimpleBalancer
-from crypto_balancer.execute import execute_order
+from crypto_balancer.ccxt_exchange import CCXTExchange, exchanges
+from crypto_balancer.executor import Executor
+from crypto_balancer.portfolio import Portfolio
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +16,7 @@ def main(args=None):
     config.read('config.ini')
 
     def exchange_choices():
-        return set(config.sections()) & set(ccxt.exchanges)
+        return set(config.sections()) & set(exchanges)
 
     parser = argparse.ArgumentParser(
         description='Balance holdings on an exchange.')
@@ -43,89 +44,52 @@ def main(args=None):
                      .format(total_target))
         sys.exit(1)
 
-    exch = getattr(ccxt, args.exchange)({'nonce': ccxt.Exchange.milliseconds})
-    exch.apiKey = config['api_key']
-    exch.secret = config['api_secret']
-    exch.load_markets()
+    exchange = CCXTExchange(args.exchange,
+                            targets.keys(),
+                            config['api_key'],
+                            config['api_secret'])
 
-    print("Connected to exchange: {}".format(exch.name))
+    print("Connected to exchange: {}".format(exchange.name))
     print()
 
-    raw_balances = exch.fetch_balance()
-    balances = {}
+    portfolio = Portfolio(targets, exchange)
+
     print("Balances:")
-    for cur in targets:
-        balances[cur] = raw_balances[cur]['total']
-        print("  {} {}".format(cur, balances[cur]))
+    for cur, bal in portfolio.balances.items():
+        print("  {} {}".format(cur, bal))
 
     print()
-
-    rates = fetch_rates(exch, targets.keys())
-    fee = exch.fees['trading']['maker']
-    balancer = SimpleBalancer(targets, args.valuebase, fee,
-                              threshold=float(config['threshold']))
-
-    base_values = balancer.calc_base_values(balances, rates)
-    total_base_value = sum(base_values.values())
 
     print("Porfolio value:")
-    for cur in base_values:
-        bv = base_values[cur]
-        pc = (bv / total_base_value) * 100
-        print("  {} {} ({:.2f} / {:.2f}%)".format(cur, bv, pc, targets[cur]))
+    for cur, pct in portfolio.balances_pct.items():
+        print("  {} ({:.2f} / {:.2f}%)".format(cur, pct, targets[cur]))
 
-    print("Total value: {:.2f} {}".format(total_base_value, args.valuebase))
+    print("Total value: {:.2f} {}".format(portfolio.valuation_quote,
+                                          portfolio.quote_currency))
     print()
 
-    orders = balancer(balances, rates, force=args.force)
+    balancer = SimpleBalancer()
+    executor = Executor(portfolio, exchange, balancer)
+    res = executor.run(force=args.force, trade=args.trade)
 
-    if not orders['orders']:
+    if not res['orders']:
         print("No balancing needed")
     else:
         print("Balancing needed:")
-        for order in orders['orders']:
+        for order in res['orders']:
             print("  " + str(order))
-        total_fee = '%s' % float('%.4g' % orders['total_fee'])
-        print("Total fees to re-balance: {} {}".format(total_fee,
-                                                       args.valuebase))
+        total_fee = '%s' % float('%.4g' % res['total_fee'])
+        print("Total fees to re-balance: {} {}"
+              .format(total_fee,
+                      portfolio.quote_currency))
 
         print()
         if args.trade:
-            for order in orders['orders']:
-                limits = exch.markets[order.pair]['limits']
-                if order.amount < limits['amount']['min'] \
-                   or order.amount * order.price < limits['cost']['min']:
-                    print("Order too small to process: {}".format(order))
-                    continue
-                try:
-                    res = execute_order(exch, order)
-                    print("Order placed: {} {} {} @ {} "
-                          .format(res['symbol'], res['side'],
-                                  res['amount'], res['price']))
-                except Exception:
-                    logger.error("Could not place order: {}".format(order))
-        else:
-            print("No trades placed, as '--trade' not given on command line")
+            for order in res['success']:
+                print("Success: {}".format(order))
 
-
-def fetch_rates(exch, curs):
-    pairs = []
-
-    for i in curs:
-        for j in curs:
-            pair = "{}/{}".format(i, j)
-            if pair in exch.markets:
-                pairs.append(pair)
-
-    rates = {}
-    for pair in pairs:
-        orderbook = exch.fetchOrderBook(pair)
-        high = orderbook['asks'][0][0]
-        low = orderbook['bids'][0][0]
-        mid = (high + low)/2.0
-        rates[pair] = mid
-
-    return rates
+            for order in res['errors']:
+                print("Failed: {}".format(order))
 
 
 if __name__ == '__main__':
