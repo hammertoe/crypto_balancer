@@ -72,3 +72,13 @@ class CCXTExchange():
                                       order.direction,
                                       order.amount,
                                       order.price)
+
+    def cancel_orders(self):
+        cancelled_orders = []
+        for pair in self.pairs:
+            open_orders = self.exch.fetch_open_orders(symbol=pair)
+            for order in open_orders:
+                self.exch.cancel_order(order['id'], order['symbol'])
+                cancelled_orders.append(order)
+        return cancelled_orders
+        

@@ -26,6 +26,8 @@ def main(args=None):
                         help='Force rebalance')
     parser.add_argument('--valuebase', default='USDT',
                         help='Currency to value portfolio in')
+    parser.add_argument('--cancel', action="store_true",
+                        help='Cancel open orders first')
     parser.add_argument('exchange', choices=exchange_choices())
     args = parser.parse_args()
 
@@ -52,6 +54,12 @@ def main(args=None):
     print("Connected to exchange: {}".format(exchange.name))
     print()
 
+    if args.cancel:
+        print("Cancelling open orders...")
+        for order in exchange.cancel_orders():
+            print("Cancelled order:", order['symbol'], order['id'])
+        print()
+    
     portfolio = Portfolio.make_portfolio(targets, exchange)
 
     print("Balances:")
