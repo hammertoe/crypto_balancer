@@ -52,7 +52,7 @@ Current Portfolio:
 No balancing needed
 ```
 
-To force it to rebalance regadless of if needed:
+To force it to rebalance regardless of if needed:
 ```
 $ crypto_balancer --force binance
 Connected to exchange: binance
