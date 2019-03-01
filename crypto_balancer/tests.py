@@ -65,7 +65,7 @@ class test_Portfolio(unittest.TestCase):
 
     def test_create_portfolio_defaults(self):
         exchange = DummyExchange(self.targets.keys(), self.targets)
-        portfolio = Portfolio(self.targets, exchange)
+        portfolio = Portfolio.make_portfolio(self.targets, exchange)
 
         self.assertEqual(portfolio.threshold, 1.0)
         self.assertEqual(portfolio.quote_currency, 'USDT')
@@ -74,7 +74,8 @@ class test_Portfolio(unittest.TestCase):
 
     def test_create_portfolio_custom(self):
         exchange = DummyExchange(self.targets.keys(), self.targets)
-        portfolio = Portfolio(self.targets, exchange, 2.0, 'BTC')
+        portfolio = Portfolio.make_portfolio(self.targets,
+                                             exchange, 2.0, 'BTC')
 
         self.assertEqual(portfolio.threshold, 2.0)
         self.assertEqual(portfolio.quote_currency, 'BTC')
@@ -83,51 +84,51 @@ class test_Portfolio(unittest.TestCase):
 
     def test_create_portfolio_balances_quote(self):
         exchange = DummyExchange(self.targets.keys(), self.balances)
-        portfolio = Portfolio(self.targets, exchange)
+        portfolio = Portfolio.make_portfolio(self.targets, exchange)
 
         self.assertEqual(portfolio.balances_quote, self.balances)
 
     def test_create_portfolio_valuation_quote(self):
         exchange = DummyExchange(self.targets.keys(), self.balances)
-        portfolio = Portfolio(self.targets, exchange)
+        portfolio = Portfolio.make_portfolio(self.targets, exchange)
 
         self.assertEqual(portfolio.valuation_quote, 1000)
 
     def test_create_portfolio_balances_pct(self):
         exchange = DummyExchange(self.targets.keys(), self.balances)
-        portfolio = Portfolio(self.targets, exchange)
+        portfolio = Portfolio.make_portfolio(self.targets, exchange)
 
         self.assertEqual(portfolio.balances_pct, self.targets)
         self.assertNotEqual(portfolio.balances_pct, self.targets2)
 
     def test_create_portfolio_balances_pct_zero(self):
         exchange = DummyExchange(self.targets.keys(), self.zero_balances)
-        portfolio = Portfolio(self.targets, exchange)
+        portfolio = Portfolio.make_portfolio(self.targets, exchange)
 
         self.assertEqual(portfolio.balances_pct, self.zero_balances)
         self.assertNotEqual(portfolio.balances_pct, self.targets)
 
     def test_create_portfolio_metric1(self):
         exchange = DummyExchange(self.targets.keys(), self.balances)
-        portfolio = Portfolio(self.targets, exchange)
+        portfolio = Portfolio.make_portfolio(self.targets, exchange)
 
         self.assertEqual(portfolio.balance_metric, 0)
 
     def test_create_portfolio_metric2(self):
         exchange = DummyExchange(self.targets.keys(), self.balances)
-        portfolio = Portfolio(self.targets2, exchange)
+        portfolio = Portfolio.make_portfolio(self.targets2, exchange)
 
         self.assertAlmostEqual(portfolio.balance_metric, 0.005)
 
     def test_create_portfolio_metric_zero(self):
         exchange = DummyExchange(self.targets.keys(), self.zero_balances)
-        portfolio = Portfolio(self.targets, exchange)
+        portfolio = Portfolio.make_portfolio(self.targets, exchange)
 
         self.assertEqual(portfolio.balance_metric, 0)
 
     def test_create_portfolio_differences_quote1(self):
         exchange = DummyExchange(self.targets.keys(), self.balances)
-        portfolio = Portfolio(self.targets, exchange)
+        portfolio = Portfolio.make_portfolio(self.targets, exchange)
 
         expected = {'XRP': 0,
                     'XLM': 0,
@@ -137,7 +138,7 @@ class test_Portfolio(unittest.TestCase):
 
     def test_create_portfolio_differences_quote2(self):
         exchange = DummyExchange(self.targets.keys(), self.balances)
-        portfolio = Portfolio(self.targets2, exchange)
+        portfolio = Portfolio.make_portfolio(self.targets2, exchange)
 
         expected = {'XRP': -50,
                     'XLM': -50,
@@ -147,19 +148,20 @@ class test_Portfolio(unittest.TestCase):
 
     def test_create_portfolio_needs_balancing1(self):
         exchange = DummyExchange(self.targets.keys(), self.balances)
-        portfolio = Portfolio(self.targets, exchange)
+        portfolio = Portfolio.make_portfolio(self.targets, exchange)
 
         self.assertFalse(portfolio.needs_balancing)
 
     def test_create_portfolio_needs_balancing2(self):
         exchange = DummyExchange(self.targets.keys(), self.balances)
-        portfolio = Portfolio(self.targets2, exchange)
+        portfolio = Portfolio.make_portfolio(self.targets2, exchange)
 
         self.assertTrue(portfolio.needs_balancing)
 
     def test_create_portfolio_needs_balancing3(self):
         exchange = DummyExchange(self.targets.keys(), self.balances)
-        portfolio = Portfolio(self.targets2, exchange, threshold=20)
+        portfolio = Portfolio.make_portfolio(self.targets2,
+                                             exchange, threshold=20)
 
         self.assertFalse(portfolio.needs_balancing)
 
@@ -175,7 +177,7 @@ class test_Portfolio(unittest.TestCase):
                  'XLM/USDT': 0.4, }
 
         exchange = DummyExchange(targets.keys(), current, rates)
-        portfolio = Portfolio(targets, exchange)
+        portfolio = Portfolio.make_portfolio(targets, exchange)
 
         expected = {'XRP': 40,
                     'XLM': 0,
@@ -196,7 +198,7 @@ class test_Portfolio(unittest.TestCase):
                  'USDT/USDT': 1.0, }
 
         exchange = DummyExchange(targets.keys(), current, rates)
-        portfolio = Portfolio(targets, exchange)
+        portfolio = Portfolio.make_portfolio(targets, exchange)
 
         expected = {'XRP': 40,
                     'XLM': 0,
@@ -231,7 +233,7 @@ class test_Portfolio(unittest.TestCase):
                  'USDT/USDT': 1.0, }
 
         exchange = DummyExchange(targets.keys(), current, rates)
-        portfolio = Portfolio(targets, exchange)
+        portfolio = Portfolio.make_portfolio(targets, exchange)
 
         expected = {'XRP': 7,
                     'XLM': 7,
@@ -259,7 +261,7 @@ class test_SimpleBalancer(unittest.TestCase):
 
     def execute(self, targets, current, rates, fee=0.001):
         exchange = DummyExchange(targets.keys(), current, rates, fee)
-        portfolio = Portfolio(targets, exchange)
+        portfolio = Portfolio.make_portfolio(targets, exchange)
 
         balancer = SimpleBalancer()
         return balancer.balance(portfolio, exchange)
@@ -445,9 +447,10 @@ class test_SimpleBalancer(unittest.TestCase):
 
         # Test that the final amounts are in proportion to the targets
         base_amounts = {}
-        for cur in res['amounts']:
+        for cur in res['proposed_portfolio'].currencies:
             pair = "{}/{}".format(cur, base)
-            base_amounts[cur] = res['amounts'][cur] * rates[pair]
+            base_amounts[cur] = \
+              res['proposed_portfolio'].balances[cur] * rates[pair]
         total_base = sum(base_amounts.values())
         for cur in targets:
             self.assertAlmostEqual(targets[cur],
@@ -485,9 +488,10 @@ class test_SimpleBalancer(unittest.TestCase):
 
         # Test that the final amounts are in proportion to the targets
         base_amounts = {}
-        for cur in res['amounts']:
+        for cur in res['proposed_portfolio'].currencies:
             pair = "{}/{}".format(cur, base)
-            base_amounts[cur] = res['amounts'][cur] * rates[pair]
+            base_amounts[cur] = \
+              res['proposed_portfolio'].balances[cur] * rates[pair]
         total_base = sum(base_amounts.values())
         for cur in targets:
             self.assertAlmostEqual(targets[cur],
@@ -525,9 +529,10 @@ class test_SimpleBalancer(unittest.TestCase):
 
         # Test that the final amounts are in proportion to the targets
         base_amounts = {}
-        for cur in res['amounts']:
+        for cur in res['proposed_portfolio'].currencies:
             pair = "{}/{}".format(cur, base)
-            base_amounts[cur] = res['amounts'][cur] * rates[pair]
+            base_amounts[cur] = \
+              res['proposed_portfolio'].balances[cur] * rates[pair]
         total_base = sum(base_amounts.values())
         for cur in targets:
             self.assertAlmostEqual(targets[cur],
@@ -634,7 +639,7 @@ class test_Executor(unittest.TestCase):
 
     def create_executor(self, targets, current, rates, fee=0.001):
         exchange = DummyExchange(targets.keys(), current, rates, fee)
-        portfolio = Portfolio(targets, exchange)
+        portfolio = Portfolio.make_portfolio(targets, exchange)
         balancer = SimpleBalancer()
         executor = Executor(portfolio, exchange, balancer)
         return executor
@@ -733,7 +738,7 @@ class test_Executor(unittest.TestCase):
                  }
 
         exchange = DummyExchange(targets.keys(), current, rates, 0.001)
-        portfolio = Portfolio(targets, exchange)
+        portfolio = Portfolio.make_portfolio(targets, exchange)
         balancer = SimpleBalancer()
         executor = Executor(portfolio, exchange, balancer)
 
@@ -761,7 +766,7 @@ class test_Executor(unittest.TestCase):
                  }
 
         exchange = DummyExchange(targets.keys(), current, rates, 0.001)
-        portfolio = Portfolio(targets, exchange)
+        portfolio = Portfolio.make_portfolio(targets, exchange)
         balancer = SimpleBalancer()
         executor = Executor(portfolio, exchange, balancer)
 

@@ -52,7 +52,7 @@ def main(args=None):
     print("Connected to exchange: {}".format(exchange.name))
     print()
 
-    portfolio = Portfolio(targets, exchange)
+    portfolio = Portfolio.make_portfolio(targets, exchange)
 
     print("Balances:")
     for cur, bal in portfolio.balances.items():
@@ -72,10 +72,16 @@ def main(args=None):
     executor = Executor(portfolio, exchange, balancer)
     res = executor.run(force=args.force, trade=args.trade)
 
-    if not res['orders']:
+    print("Initial Portfolio balance metric: {:.4g}".format(
+        res['initial_portfolio'].balance_metric))
+
+    if not res['proposed_portfolio']:
         print("No balancing needed")
     else:
         print("Balancing needed:")
+        print("Proposed Portfolio balance metric: {:.4g}".format(
+            res['proposed_portfolio'].balance_metric))
+        print("Orders:")
         for order in res['orders']:
             print("  " + str(order))
         total_fee = '%s' % float('%.4g' % res['total_fee'])

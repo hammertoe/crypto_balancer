@@ -1,13 +1,30 @@
 class Portfolio():
 
+    @classmethod
+    def make_portfolio(cls, targets, exchange,
+                       threshold=1.0, quote_currency="USDT"):
+        p = cls(targets, exchange, threshold, quote_currency)
+        p.sync_balances()
+        p.sync_rates()
+        return p
+
     def __init__(self, targets, exchange, threshold=1.0,
                  quote_currency="USDT"):
         self.targets = targets
         self.threshold = threshold
         self.exchange = exchange
         self.quote_currency = quote_currency
-        self.sync_balances()
-        self.sync_rates()
+        self.balances = {}
+        self.rates = {}
+
+    def copy(self):
+        p = Portfolio(self.targets,
+                      self.exchange,
+                      self.threshold,
+                      self.quote_currency)
+        p.balances = self.balances.copy()
+        p.rates = self.rates.copy()
+        return p
 
     def sync_balances(self):
         self.balances = self.exchange.balances.copy()

@@ -21,12 +21,14 @@ class Executor():
                'errors': [],
                'balances': balances,
                'total_fee': 0.0,
-               'portfolio_value': self.portfolio.valuation_quote, }
+               'initial_portfolio': self.portfolio,
+               'proposed_portfolio': None, }
 
         if self.portfolio.needs_balancing or force:
             orders = self.balancer.balance(self.portfolio, self.exchange)
 
-            if orders['orders']:
+            if orders['proposed_portfolio']:
+                res['proposed_portfolio'] = orders['proposed_portfolio']
                 res['total_fee'] = orders['total_fee']
                 res['orders'] = orders['orders']
 

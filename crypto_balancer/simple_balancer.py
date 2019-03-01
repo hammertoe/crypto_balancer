@@ -7,11 +7,12 @@ class SimpleBalancer():
         self.rounds = rounds
         self.attempts = attempts
 
-    def balance(self, portfolio, exchange):
+    def balance(self, initial_portfolio, exchange):
         pairs_processed = set()
         attempts = []
         rates = exchange.rates
-        quote_currency = portfolio.quote_currency
+        quote_currency = initial_portfolio.quote_currency
+        initial_balance_metric = initial_portfolio.balance_metric
 
         # Add in the identify rate just so we don't have to special
         # case it later
@@ -20,13 +21,14 @@ class SimpleBalancer():
         # We brute force try a number of attempts to balance
         for _ in range(self.attempts):
             total_fee = 0.0
-            portfolio.sync_balances()
+            candidate_portfolio = initial_portfolio.copy()
             pairs_processed = set()
             orders = []
             last_differences = []
 
             for i in range(self.rounds):
-                differences = sorted(portfolio.differences_quote.items())
+                differences = sorted(
+                    candidate_portfolio.differences_quote.items())
 
                 # not making progress, so break
                 if differences == last_differences:
@@ -93,10 +95,12 @@ class SimpleBalancer():
                         continue
 
                     # Adjust the amounts of each currency we hold
-                    portfolio.balances[p_cur] += to_buy_amount_cur
-                    portfolio.balances[n_cur] -= to_sell_amount_cur
+                    candidate_portfolio.balances[p_cur] \
+                        += to_buy_amount_cur
+                    candidate_portfolio.balances[n_cur] \
+                        -= to_sell_amount_cur
 
-                    if portfolio.balances[n_cur] < 0:
+                    if candidate_portfolio.balances[n_cur] < 0:
                         # gone negative so not valid result
                         break
 
@@ -109,19 +113,24 @@ class SimpleBalancer():
                     total_fee += trade_amount_quote * exchange.fee
 
             # Check the at the end we have no differences outstanding
-            if orders:
+            candidate_balance_metric = candidate_portfolio.balance_metric
+            if orders and candidate_balance_metric < initial_balance_metric:
                 # calculate avg deviation of differences
-                attempts.append((portfolio.balance_metric, total_fee,
-                                 orders, portfolio.balances))
+                attempts.append((candidate_balance_metric,
+                                 total_fee,
+                                 orders,
+                                 candidate_portfolio))
 
         if attempts:
             # sort our attempts so the lowest price one is first
             attempts.sort(key=lambda x: x[:3])
-            dev, total_fee, orders, balances = attempts[0]
+            best_attempt = attempts[0]
+            _, total_fee, orders, proposed_portfolio = best_attempt
         else:
-            dev, total_fee, orders, balances = 0, 0, [], portfolio.balances
+            # default in case we don't find a good result
+            total_fee, orders, proposed_portfolio = 0, [], None
 
         return {'orders': orders,
-                'amounts': balances,
                 'total_fee': total_fee,
-                'dev': dev}
+                'initial_portfolio': initial_portfolio,
+                'proposed_portfolio': proposed_portfolio}
