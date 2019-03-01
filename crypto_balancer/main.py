@@ -106,8 +106,9 @@ def main(args=None):
     print()
     print("  Total value: {:.2f} {}".format(portfolio.valuation_quote,
                                             portfolio.quote_currency))
-    print("  Balance error: {:.2g}".format(
-        res['proposed_portfolio'].balance_rmse))
+    print("  Balance error: {:.2g} / {:.2g}".format(
+        res['proposed_portfolio'].balance_rmse,
+        threshold))
 
     total_fee = '%s' % float('%.4g' % res['total_fee'])
     print("  Total fees to re-balance: {} {}"
