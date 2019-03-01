@@ -89,7 +89,7 @@ class Portfolio():
             return _total*(self.targets[cur]/100.0) \
                 - _balances_quote[cur]
 
-        pcts = [calc_diff(cur) / _total
+        pcts = [(calc_diff(cur) / _total) * 100.0
                 for cur in self.currencies]
         dev = math.sqrt(sum([x**2 for x in pcts]) / len(pcts))
         return dev
