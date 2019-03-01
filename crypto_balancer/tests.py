@@ -112,19 +112,19 @@ class test_Portfolio(unittest.TestCase):
         exchange = DummyExchange(self.targets.keys(), self.balances)
         portfolio = Portfolio.make_portfolio(self.targets, exchange)
 
-        self.assertEqual(portfolio.balance_metric, 0)
+        self.assertEqual(portfolio.balance_rmse, 0)
 
     def test_create_portfolio_metric2(self):
         exchange = DummyExchange(self.targets.keys(), self.balances)
         portfolio = Portfolio.make_portfolio(self.targets2, exchange)
 
-        self.assertAlmostEqual(portfolio.balance_metric, 0.005)
+        self.assertAlmostEqual(portfolio.balance_rmse, 0.07071, 5)
 
     def test_create_portfolio_metric_zero(self):
         exchange = DummyExchange(self.targets.keys(), self.zero_balances)
         portfolio = Portfolio.make_portfolio(self.targets, exchange)
 
-        self.assertEqual(portfolio.balance_metric, 0)
+        self.assertEqual(portfolio.balance_rmse, 0)
 
     def test_create_portfolio_differences_quote1(self):
         exchange = DummyExchange(self.targets.keys(), self.balances)

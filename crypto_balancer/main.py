@@ -81,14 +81,14 @@ def main(args=None):
     res = executor.run(force=args.force, trade=args.trade)
 
     print("Initial Portfolio balance metric: {:.4g}".format(
-        res['initial_portfolio'].balance_metric))
+        res['initial_portfolio'].balance_rmse))
 
     if not res['proposed_portfolio']:
         print("No balancing needed")
     else:
         print("Balancing needed:")
         print("Proposed Portfolio balance metric: {:.4g}".format(
-            res['proposed_portfolio'].balance_metric))
+            res['proposed_portfolio'].balance_rmse))
         print("Orders:")
         for order in res['orders']:
             print("  " + str(order))

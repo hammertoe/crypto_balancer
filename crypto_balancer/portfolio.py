@@ -1,3 +1,5 @@
+import math
+
 class Portfolio():
 
     @classmethod
@@ -76,7 +78,7 @@ class Portfolio():
                 for cur in self.currencies}
 
     @property
-    def balance_metric(self):
+    def balance_rmse(self):
         _total = self.valuation_quote
         _balances_quote = self.balances_quote
 
@@ -89,7 +91,7 @@ class Portfolio():
 
         pcts = [calc_diff(cur) / _total
                 for cur in self.currencies]
-        dev = sum([x**2 for x in pcts]) / len(pcts)
+        dev = math.sqrt(sum([x**2 for x in pcts]) / len(pcts))
         return dev
 
     @property

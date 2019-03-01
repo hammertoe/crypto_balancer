@@ -12,7 +12,7 @@ class SimpleBalancer():
         attempts = []
         rates = exchange.rates
         quote_currency = initial_portfolio.quote_currency
-        initial_balance_metric = initial_portfolio.balance_metric
+        initial_balance_rmse = initial_portfolio.balance_rmse
 
         # Add in the identify rate just so we don't have to special
         # case it later
@@ -113,10 +113,10 @@ class SimpleBalancer():
                     total_fee += trade_amount_quote * exchange.fee
 
             # Check the at the end we have no differences outstanding
-            candidate_balance_metric = candidate_portfolio.balance_metric
-            if orders and candidate_balance_metric < initial_balance_metric:
+            candidate_balance_rmse = candidate_portfolio.balance_rmse
+            if orders and candidate_balance_rmse < initial_balance_rmse:
                 # calculate avg deviation of differences
-                attempts.append((candidate_balance_metric,
+                attempts.append((candidate_balance_rmse,
                                  total_fee,
                                  orders,
                                  candidate_portfolio))
