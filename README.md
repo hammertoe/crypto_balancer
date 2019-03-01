@@ -37,22 +37,17 @@ By default it values the portfolio in USDT, this can be changed with `--valuebas
 Dry run (don't actually trade) against Binance
 ```
 $ crypto_balancer binance
-Connected to exchange: Binance
+Connected to exchange: binance
 
-Balances:
-  XRP 401.6
-  BTC 0.01609
-  ETH 0.42
-  BNB 3.09173906
-  USDT 33.182232
+Current Portfolio:
+  XRP    3272.28  (39.92 / 40.00%)
+  BTC    0.14     (20.05 / 20.00%)
+  ETH    3.85     (20.02 / 20.00%)
+  BNB    22.81    ( 9.99 / 10.00%)
+  USDT   262.48   (10.02 / 10.00%)
 
-Porfolio value:
-  XRP 120.92778400000002 (39.79 / 40.00%)
-  BTC 60.723096850000005 (19.98 / 20.00%)
-  ETH 58.266600000000004 (19.17 / 20.00%)
-  BNB 30.807170102510998 (10.14 / 10.00%)
-  USDT 33.182232 (10.92 / 10.00%)
-Total value: 303.91 USDT
+  Total value: 2619.40 USDT
+  Balance error: 0.043 / 0.08
 
 No balancing needed
 ```
@@ -60,63 +55,66 @@ No balancing needed
 To force it to rebalance regadless of if needed:
 ```
 $ crypto_balancer --force binance
-Connected to exchange: Binance
+Connected to exchange: binance
 
-Balances:
-  XRP 401.6
-  BTC 0.01609
-  ETH 0.42
-  BNB 3.09173906
-  USDT 33.182232
+Current Portfolio:
+  XRP    3272.28  (39.92 / 40.00%)
+  BTC    0.14     (20.04 / 20.00%)
+  ETH    3.85     (20.02 / 20.00%)
+  BNB    22.81    ( 9.99 / 10.00%)
+  USDT   262.48   (10.02 / 10.00%)
 
-Porfolio value:
-  XRP 120.59445600000002 (39.75 / 40.00%)
-  BTC 60.66066765 (19.99 / 20.00%)
-  ETH 58.188900000000004 (19.18 / 20.00%)
-  BNB 30.791402233305003 (10.15 / 10.00%)
-  USDT 33.182232 (10.94 / 10.00%)
-Total value: 303.42 USDT
+  Total value: 2619.28 USDT
+  Balance error: 0.042 / 0.08
 
-Balancing needed:
-BUY 0.01800593003472523 ETH/USDT @ 138.54500000000002
-BUY 1.4973656525450756 XRP/BNB @ 0.030144999999999998
-BUY 1.0755472579300063 XRP/USDT @ 0.300285
-BUY 6.064565297859811e-06 BTC/USDT @ 3770.085
+Balancing needed [FORCED]:
 
-No trades placed, as '--trade' not given on command line
+Proposed Portfolio:
+  XRP    3278.51  (40.00 / 40.00%)
+  BTC    0.14     (20.04 / 20.00%)
+  ETH    3.83     (19.95 / 20.00%)
+  BNB    22.81    ( 9.99 / 10.00%)
+  USDT   262.48   (10.02 / 10.00%)
+
+  Total value: 2619.28 USDT
+  Balance error: 0.032
+  Total fees to re-balance: 0.00199 USDT
+
+Orders:
+  BUY 6.2279674364331195 XRP/ETH @ 0.00234478
 ```
 
 To get it to actually execute trades if needed:
 
 ```
 $ crypto_balancer --force --trade binance
-Connected to exchange: Binance
+Connected to exchange: binance
 
-Balances:
-  XRP 401.6
-  BTC 0.01609
-  ETH 0.42
-  BNB 0.78000764
-  USDT 56.155182
+Current Portfolio:
+  XRP    3272.28  (39.96 / 40.00%)
+  BTC    0.14     (20.04 / 20.00%)
+  ETH    3.84     (19.94 / 20.00%)
+  BNB    22.94    (10.04 / 10.00%)
+  USDT   262.48   (10.02 / 10.00%)
 
-Porfolio value:
-  XRP 120.81935200000002 (39.80 / 40.00%)
-  BTC 60.7695165 (20.02 / 20.00%)
-  ETH 58.09649999999999 (19.14 / 20.00%)
-  BNB 7.74957090531 (2.55 / 10.00%)
-  USDT 56.155182 (18.50 / 10.00%)
-Total value: 303.59 USDT
+  Total value: 2619.01 USDT
+  Balance error: 0.043 / 0.08
 
-Balancing needed:
-BUY 2.2756791459924015 BNB/USDT @ 9.93525
-BUY 0.01895191961729272 ETH/USDT @ 138.325
-BUY 1.8787227415645225 XRP/USDT @ 0.30084500000000003
-BUY 0.17115863297709613 XRP/BTC @ 7.965500000000001e-05
+Balancing needed [FORCED]:
 
-Order placed: BNB/USDT buy 2.27 @ 9.9353 
-Order too small to process: BUY 0.01895191961729272 ETH/USDT @ 138.325
-Order too small to process: BUY 1.8787227415645225 XRP/USDT @ 0.30084500000000003
-Order too small to process: BUY 0.17115863297709613 XRP/BTC @ 7.965500000000001e-05
+Proposed Portfolio:
+  XRP    3272.28  (39.96 / 40.00%)
+  BTC    0.14     (20.04 / 20.00%)
+  ETH    3.85     (20.00 / 20.00%)
+  BNB    22.80    ( 9.98 / 10.00%)
+  USDT   262.48   (10.02 / 10.00%)
+
+  Total value: 2619.01 USDT
+  Balance error: 0.031 / 0.08
+  Total fees to re-balance: 0.001592 USDT
+
+Orders:
+  Submitted: sell 0.13 BNB/ETH @ 0.08422
 ```
 
 ## Running automatically
