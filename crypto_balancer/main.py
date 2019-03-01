@@ -63,50 +63,67 @@ def main(args=None):
     threshold = float(config['threshold'])
     portfolio = Portfolio.make_portfolio(targets, exchange, threshold)
 
-    print("Balances:")
-    for cur, bal in portfolio.balances.items():
-        print("  {} {}".format(cur, bal))
+    print("Current Portfolio:")
+    for cur in portfolio.balances:
+        bal = portfolio.balances[cur]
+        pct = portfolio.balances_pct[cur]
+        tgt = targets[cur]
+        print("  {:<6s} {:<8.2f} ({:>5.2f} / {:>5.2f}%)"
+              .format(cur, bal, pct, tgt))
 
     print()
-
-    print("Porfolio value:")
-    for cur, pct in portfolio.balances_pct.items():
-        print("  {} ({:.2f} / {:.2f}%)".format(cur, pct, targets[cur]))
-
-    print("Total value: {:.2f} {}".format(portfolio.valuation_quote,
-                                          portfolio.quote_currency))
-    print()
-
+    print("  Total value: {:.2f} {}".format(portfolio.valuation_quote,
+                                            portfolio.quote_currency))
     balancer = SimpleBalancer()
     executor = Executor(portfolio, exchange, balancer)
     res = executor.run(force=args.force, trade=args.trade)
 
-    print("Initial Portfolio balance error: {:.2g} / {:.2g} {}".format(
+    print("  Balance error: {:.2g} / {:.2g}".format(
         res['initial_portfolio'].balance_rmse,
-        threshold,
-        "[FORCE]" if args.force else ""))
+        threshold))
 
-    if not res['proposed_portfolio']:
+    print()
+    if not portfolio.needs_balancing and not args.force:
         print("No balancing needed")
-    else:
-        print("Balancing needed:")
-        print("Proposed Portfolio balance error: {:.2g}".format(
-            res['proposed_portfolio'].balance_rmse))
-        print("Orders:")
-        for order in res['orders']:
-            print("  " + str(order))
-        total_fee = '%s' % float('%.4g' % res['total_fee'])
-        print("Total fees to re-balance: {} {}"
-              .format(total_fee,
-                      portfolio.quote_currency))
+        sys.exit(0)
 
-        print()
-        if args.trade:
-            for order in res['success']:
-                print("Success: {}".format(order))
+    print("Balancing needed{}:".format(" [FORCED]" if args.force else ""))
+    print()
+    print("Proposed Portfolio:")
+    portfolio = res['proposed_portfolio']
 
-            for order in res['errors']:
-                print("Failed: {}".format(order))
+    if not portfolio:
+        print("Could not calculate a better portfolio")
+        sys.exit(0)
+
+    for cur in portfolio.balances:
+        bal = portfolio.balances[cur]
+        pct = portfolio.balances_pct[cur]
+        tgt = targets[cur]
+        print("  {:<6s} {:<8.2f} ({:>5.2f} / {:>5.2f}%)"
+              .format(cur, bal, pct, tgt))
+
+    print()
+    print("  Total value: {:.2f} {}".format(portfolio.valuation_quote,
+                                            portfolio.quote_currency))
+    print("  Balance error: {:.2g}".format(
+        res['proposed_portfolio'].balance_rmse))
+
+    print("Orders:")
+    for order in res['orders']:
+        print("  " + str(order))
+    total_fee = '%s' % float('%.4g' % res['total_fee'])
+    print("Total fees to re-balance: {} {}"
+          .format(total_fee,
+                  portfolio.quote_currency))
+
+    print()
+    if args.trade:
+        for order in res['success']:
+            print("Submitted: {}".format(order))
+
+        for order in res['errors']:
+            print("Failed: {}".format(order))
 
 
 if __name__ == '__main__':
