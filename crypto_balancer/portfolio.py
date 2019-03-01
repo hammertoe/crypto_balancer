@@ -58,12 +58,7 @@ class Portfolio():
 
     @property
     def needs_balancing(self):
-        _current_percentages = self.balances_pct
-        for cur in self.currencies:
-            if abs(self.targets[cur] - _current_percentages[cur]) \
-               > self.threshold:
-                return True
-        return False
+        return self.balance_rmse > self.threshold
 
     @property
     def balances_pct(self):

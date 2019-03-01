@@ -59,8 +59,9 @@ def main(args=None):
         for order in exchange.cancel_orders():
             print("Cancelled order:", order['symbol'], order['id'])
         print()
-    
-    portfolio = Portfolio.make_portfolio(targets, exchange)
+
+    threshold = float(config['threshold'])
+    portfolio = Portfolio.make_portfolio(targets, exchange, threshold)
 
     print("Balances:")
     for cur, bal in portfolio.balances.items():
@@ -80,8 +81,10 @@ def main(args=None):
     executor = Executor(portfolio, exchange, balancer)
     res = executor.run(force=args.force, trade=args.trade)
 
-    print("Initial Portfolio balance error: {:.2g}".format(
-        res['initial_portfolio'].balance_rmse))
+    print("Initial Portfolio balance error: {:.2g} / {:.2g} {}".format(
+        res['initial_portfolio'].balance_rmse,
+        threshold,
+        "[FORCE]" if args.force else ""))
 
     if not res['proposed_portfolio']:
         print("No balancing needed")
