@@ -37,7 +37,7 @@ class Executor():
                         try:
                             r = self.exchange.execute_order(order)
                             res['success'].append(Order(r['symbol'],
-                                                        r['side'],
+                                                        r['side'].upper(),
                                                         r['amount'],
                                                         r['price']))
                         except Exception as e:

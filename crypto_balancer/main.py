@@ -109,21 +109,22 @@ def main(args=None):
     print("  Balance error: {:.2g}".format(
         res['proposed_portfolio'].balance_rmse))
 
-    print("Orders:")
-    for order in res['orders']:
-        print("  " + str(order))
     total_fee = '%s' % float('%.4g' % res['total_fee'])
-    print("Total fees to re-balance: {} {}"
+    print("  Total fees to re-balance: {} {}"
           .format(total_fee,
                   portfolio.quote_currency))
 
     print()
+    print("Orders:")
     if args.trade:
         for order in res['success']:
-            print("Submitted: {}".format(order))
+            print("  Submitted: {}".format(order))
 
         for order in res['errors']:
-            print("Failed: {}".format(order))
+            print("  Failed: {}".format(order))
+    else:
+        for order in res['orders']:
+            print("  " + str(order))
 
 
 if __name__ == '__main__':
