@@ -118,7 +118,7 @@ class test_Portfolio(unittest.TestCase):
         exchange = DummyExchange(self.targets.keys(), self.balances)
         portfolio = Portfolio.make_portfolio(self.targets2, exchange)
 
-        self.assertAlmostEqual(portfolio.balance_rmse, 0.07071, 5)
+        self.assertAlmostEqual(portfolio.balance_rmse, 7.071067, 5)
 
     def test_create_portfolio_metric_zero(self):
         exchange = DummyExchange(self.targets.keys(), self.zero_balances)
