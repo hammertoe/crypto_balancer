@@ -826,17 +826,17 @@ class test_DummyExchange(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.exchange.execute_order(order)
 
-    def test_validator_order_true(self):
+    def test_preprocess_order_true(self):
         order = Order('XRP/USDT', 'BUY', 10, 0.32)
-        self.assertTrue(self.exchange.validate_order(order))
+        self.assertEqual(self.exchange.preprocess_order(order), order)
 
-    def test_validator_order_false(self):
+    def test_preprocess_order_false(self):
         order = Order('XRP/USDT', 'BUY', 0.1, 0.32)
-        self.assertFalse(self.exchange.validate_order(order))
+        self.assertIsNone(self.exchange.preprocess_order(order))
 
-    def test_validator_order_bad(self):
+    def test_preprocess_order_bad(self):
         order = Order('ZEC/USDT', 'BUY', 10, 0.32)
-        self.assertFalse(self.exchange.validate_order(order))
+        self.assertIsNone(self.exchange.preprocess_order(order))
 
 
 if __name__ == '__main__':  # pragma: no cover

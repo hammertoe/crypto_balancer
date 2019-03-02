@@ -90,7 +90,8 @@ class SimpleBalancer():
                     order = Order(trade_pair, trade_direction,
                                   trade_amount, trade_rate)
 
-                    if not exchange.validate_order(order):
+                    order = exchange.preprocess_order(order)
+                    if not order:
                         continue
 
                     # Adjust the amounts of each currency we hold
@@ -114,8 +115,7 @@ class SimpleBalancer():
             # Check the at the end we have no differences outstanding
             candidate_balance_rmse = candidate_portfolio.balance_rmse
             if orders \
-               and candidate_balance_rmse < initial_portfolio.balance_rmse \
-               and candidate_balance_rmse < initial_portfolio.threshold:
+               and candidate_balance_rmse < initial_portfolio.balance_rmse:
                 # calculate avg deviation of differences
                 attempts.append((candidate_balance_rmse,
                                  total_fee,

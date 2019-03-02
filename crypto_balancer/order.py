@@ -6,6 +6,7 @@ class Order():
         self.direction = direction
         self.amount = float(amount)
         self.price = float(price)
+        self.type_ = None
 
     def __str__(self):
         return "{} {} {} @ {}".format(self.direction, self.amount,
@@ -16,7 +17,10 @@ class Order():
                                                   self.amount, self.price)
 
     def __eq__(self, other):
-        return self.__dict__ == other.__dict__
-
+        return self.pair == other.pair and \
+            self.direction == other.direction and \
+            self.amount == other.amount and \
+            self.price == other.price
+    
     def __lt__(self, other):
         return str(self) < str(other)

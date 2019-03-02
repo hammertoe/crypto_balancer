@@ -77,15 +77,16 @@ class DummyExchange():
     def fee(self):
         return self._fee
 
-    def validate_order(self, order):
+    def preprocess_order(self, order):
         try:
             limits = self.limits[order.pair]
         except KeyError:
-            return False
+            return None
         if order.amount < limits['amount']['min'] \
            or order.amount * order.price < limits['cost']['min']:
-            return False
-        return True
+            return None
+        order.type_ = 'LIMIT'
+        return order
 
     def execute_order(self, order):
         base, quote = order.pair.split('/')

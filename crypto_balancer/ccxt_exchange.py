@@ -56,19 +56,33 @@ class CCXTExchange():
     def fee(self):
         return self.exch.fees['trading']['maker']
 
-    def validate_order(self, order):
+    def preprocess_order(self, order):
         try:
             limits = self.limits[order.pair]
         except KeyError:
-            return False
+            return None
+        
+        order.amount = float(
+            self.exch.amount_to_precision(
+                order.pair, order.amount))
+        order.price = float(
+            self.exch.price_to_precision(
+                order.pair, order.price))
+
+        if order.price == 0 or order.amount == 0:
+            return None
+        
         if order.amount < limits['amount']['min'] \
            or order.amount * order.price < limits['cost']['min']:
-            return False
-        return True
+            return None
+        order.type_ = 'LIMIT'
+        return order
 
     def execute_order(self, order):
+        if not order.type_:
+            raise ValueError("Order needs preprocessing first")
         return self.exch.create_order(order.pair,
-                                      'limit',
+                                      order.type_,
                                       order.direction,
                                       order.amount,
                                       order.price)
