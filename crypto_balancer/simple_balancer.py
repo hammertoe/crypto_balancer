@@ -115,7 +115,7 @@ class SimpleBalancer():
             # Check the at the end we have no differences outstanding
             candidate_balance_rmse = candidate_portfolio.balance_rmse
             if orders \
-               and candidate_balance_rmse < initial_portfolio.balance_rmse:
+               and candidate_balance_rmse < initial_portfolio.balance_rmse * 0.9:
                 # calculate avg deviation of differences
                 attempts.append((candidate_balance_rmse,
                                  total_fee,
