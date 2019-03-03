@@ -24,6 +24,8 @@ def main(args=None):
                         help='Actually place orders')
     parser.add_argument('--force', action="store_true",
                         help='Force rebalance')
+    parser.add_argument('--accuracy', action="store_true",
+                        help='Optimize for accuracy, rather than cost')
     parser.add_argument('--valuebase', default='USDT',
                         help='Currency to value portfolio in')
     parser.add_argument('--cancel', action="store_true",
@@ -76,7 +78,7 @@ def main(args=None):
                                             portfolio.quote_currency))
     balancer = SimpleBalancer()
     executor = Executor(portfolio, exchange, balancer)
-    res = executor.run(force=args.force, trade=args.trade)
+    res = executor.run(force=args.force, trade=args.trade, accuracy=args.accuracy)
 
     print("  Balance error: {:.2g} / {:.2g}".format(
         res['initial_portfolio'].balance_rmse,
