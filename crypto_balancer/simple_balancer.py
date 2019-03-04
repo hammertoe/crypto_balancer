@@ -12,21 +12,18 @@ class Attempt():
 
 
 class SimpleBalancer():
-    def __init__(self, rounds=6, attempts=10000):
-        self.rounds = rounds
-        self.attempts = attempts
 
     def permute_differences(self, differences_quote):
         differences = differences_quote.items()
         positives = [x for x in differences if x[1] > 0]
         negatives = [x for x in differences if x[1] < 0]
         res = []
-        for p in positives:
-            for n in negatives:
+        for p in sorted(positives, key=lambda x: x[1], reverse=True):
+            for n in sorted(negatives, key=lambda x: x[1]):
                 res.append((p, n))
         return res
 
-    def balance(self, initial_portfolio, exchange, accuracy=False):
+    def balance(self, initial_portfolio, exchange, accuracy=False, max_orders=5):
         rates = exchange.rates
         quote_currency = initial_portfolio.quote_currency
 
@@ -42,7 +39,7 @@ class SimpleBalancer():
             diffs = self.permute_differences(
                 attempt.portfolio.differences_quote)
 
-            if not diffs or attempt.depth > 6:
+            if not diffs or attempt.depth >= max_orders:
                 if attempt.portfolio.balance_rmse < \
                    initial_portfolio.balance_rmse \
                    and not attempt.portfolio.needs_balancing:
