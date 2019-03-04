@@ -26,6 +26,9 @@ def main(args=None):
                         help='Force rebalance')
     parser.add_argument('--accuracy', action="store_true",
                         help='Optimize for accuracy, rather than cost')
+    parser.add_argument('--max_orders', default=5,
+                        help='Maximum number of orders to perform in '
+                             'rebalance')
     parser.add_argument('--valuebase', default='USDT',
                         help='Currency to value portfolio in')
     parser.add_argument('--cancel', action="store_true",
@@ -63,6 +66,7 @@ def main(args=None):
         print()
 
     threshold = float(config['threshold'])
+    max_orders = int(args.max_orders)
     portfolio = Portfolio.make_portfolio(targets, exchange, threshold)
 
     print("Current Portfolio:")
@@ -78,8 +82,10 @@ def main(args=None):
                                             portfolio.quote_currency))
     balancer = SimpleBalancer()
     executor = Executor(portfolio, exchange, balancer)
-    res = executor.run(force=args.force, trade=args.trade,
-                       accuracy=args.accuracy)
+    res = executor.run(force=args.force,
+                       trade=args.trade,
+                       accuracy=args.accuracy,
+                       max_orders=max_orders)
 
     print("  Balance error: {:.2g} / {:.2g}".format(
         res['initial_portfolio'].balance_rmse,
