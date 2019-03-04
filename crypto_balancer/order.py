@@ -21,7 +21,7 @@ class Order():
             self.direction == other.direction and \
             self.amount == other.amount and \
             self.price == other.price
-    
+
     def __lt__(self, other):
         return str(self) < str(other)
 

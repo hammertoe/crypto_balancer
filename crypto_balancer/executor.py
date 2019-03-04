@@ -4,6 +4,7 @@ from crypto_balancer.order import Order
 
 logger = logging.getLogger(__name__)
 
+
 class Executor():
 
     def __init__(self, portfolio, exchange, balancer):
@@ -24,7 +25,8 @@ class Executor():
                'proposed_portfolio': None, }
 
         if self.portfolio.needs_balancing or force:
-            orders = self.balancer.balance(self.portfolio, self.exchange, accuracy)
+            orders = self.balancer.balance(self.portfolio,
+                                           self.exchange, accuracy)
 
             if orders['proposed_portfolio']:
                 res['proposed_portfolio'] = orders['proposed_portfolio']

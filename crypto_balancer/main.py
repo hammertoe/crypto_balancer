@@ -78,7 +78,8 @@ def main(args=None):
                                             portfolio.quote_currency))
     balancer = SimpleBalancer()
     executor = Executor(portfolio, exchange, balancer)
-    res = executor.run(force=args.force, trade=args.trade, accuracy=args.accuracy)
+    res = executor.run(force=args.force, trade=args.trade,
+                       accuracy=args.accuracy)
 
     print("  Balance error: {:.2g} / {:.2g}".format(
         res['initial_portfolio'].balance_rmse,

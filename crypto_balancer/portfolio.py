@@ -1,5 +1,6 @@
 import math
 
+
 class Portfolio():
 
     @classmethod
@@ -81,7 +82,7 @@ class Portfolio():
             return 0
 
         def calc_diff(cur):
-            return _total*(self.targets[cur]/100.0) \
+            return _total * (self.targets[cur] / 100.0) \
                 - _balances_quote[cur]
 
         pcts = [(calc_diff(cur) / _total) * 100.0
@@ -96,7 +97,7 @@ class Portfolio():
         _total = self.valuation_quote
 
         def calc_diff(cur):
-            return _total*(self.targets[cur]/100.0) \
+            return _total * (self.targets[cur] / 100.0) \
                 - _balances_quote[cur]
 
         return {cur: calc_diff(cur) for cur in self.currencies}
