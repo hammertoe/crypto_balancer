@@ -40,7 +40,7 @@ class CCXTExchange():
             orderbook = self.exch.fetchOrderBook(pair)
             high = orderbook['asks'][0][0]
             low = orderbook['bids'][0][0]
-            mid = (high + low)/2.0
+            mid = (high + low) / 2.0
             _rates[pair] = mid
 
         return _rates
@@ -61,7 +61,7 @@ class CCXTExchange():
             limits = self.limits[order.pair]
         except KeyError:
             return None
-        
+
         order.amount = float(
             self.exch.amount_to_precision(
                 order.pair, order.amount))
@@ -71,7 +71,7 @@ class CCXTExchange():
 
         if order.price == 0 or order.amount == 0:
             return None
-        
+
         if order.amount < limits['amount']['min'] \
            or order.amount * order.price < limits['cost']['min']:
             return None
@@ -95,4 +95,3 @@ class CCXTExchange():
                 self.exch.cancel_order(order['id'], order['symbol'])
                 cancelled_orders.append(order)
         return cancelled_orders
-        
