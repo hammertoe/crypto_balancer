@@ -101,6 +101,7 @@ class Portfolio():
     @property
     def balance_max_error(self):
         pcts = self.balance_errors_pct
+        pcts = [abs(x) for x in pcts]
         return max(pcts)
 
     @property
