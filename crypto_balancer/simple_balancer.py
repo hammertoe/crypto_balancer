@@ -15,15 +15,16 @@ class SimpleBalancer():
 
     def permute_differences(self, differences_quote):
         differences = differences_quote.items()
-        positives = [x for x in differences if x[1] > 0]
-        negatives = [x for x in differences if x[1] < 0]
+        positives = [x for x in differences if x[1] > 0.01]
+        negatives = [x for x in differences if x[1] < -0.01]
         res = []
         for p in sorted(positives, key=lambda x: x[1], reverse=True):
             for n in sorted(negatives, key=lambda x: x[1]):
-                res.append((p, n))
+                if p[0] != n[0]:
+                    res.append((p, n))
         return res
 
-    def balance(self, initial_portfolio, exchange, accuracy=False, max_orders=5):
+    def balance(self, initial_portfolio, exchange, accuracy=1.0, max_orders=5):
         rates = exchange.rates
         quote_currency = initial_portfolio.quote_currency
 
@@ -40,10 +41,6 @@ class SimpleBalancer():
                 attempt.portfolio.differences_quote)
 
             if not diffs or attempt.depth >= max_orders:
-                if attempt.portfolio.balance_rmse < \
-                   initial_portfolio.balance_rmse \
-                   and not attempt.portfolio.needs_balancing:
-                    attempts.append(attempt)
                 continue
 
             for pos, neg in diffs:
@@ -80,9 +77,10 @@ class SimpleBalancer():
                 to_sell_pair_quote = "{}/{}".format(n_cur, quote_currency)
                 to_buy_pair_quote = "{}/{}".format(p_cur, quote_currency)
 
-                for trade_amount_quote in [p_amount, -n_amount,
+                for trade_amount_quote in (p_amount,
+                                           -n_amount,
                                            min_trade_amount_quote,
-                                           min_trade_amount_quote * 1.5]:
+                                           min_trade_amount_quote * 1.5):
 
                     # Work out how much of the currency to buy/sell
                     to_sell_amount_cur = \
@@ -128,23 +126,25 @@ class SimpleBalancer():
                                           ))
                     todo.append(new_attempt)
 
-        if accuracy:
-            sort_key = lambda x: (x.portfolio.balance_rmse,
-                                  x.total_fee, x.orders)
-        else:
-            sort_key = lambda x: (x.total_fee,
-                                  x.portfolio.balance_rmse, x.orders)
-        attempts = list(attempts)
-        attempts = sorted(attempts, key=sort_key)
+                    if new_attempt.portfolio.balance_rms_error < \
+                       initial_portfolio.balance_rms_error:
+                        attempts.append(new_attempt)
 
-        if attempts:
-            best_attempt = attempts[0]
-            return {'orders': sorted(best_attempt.orders),
-                    'total_fee': best_attempt.total_fee,
-                    'initial_portfolio': initial_portfolio,
-                    'proposed_portfolio': best_attempt.portfolio}
-        else:
+        if not attempts:
             return {'orders': [],
                     'total_fee': 0.0,
                     'initial_portfolio': initial_portfolio,
                     'proposed_portfolio': None}
+
+        sort_key = lambda x: (x.portfolio.balance_rms_error,
+                              x.total_fee,
+                              len(x.orders),
+                              x.orders)
+        decorated_attempts = [(sort_key(x), x) for x in attempts]
+        decorated_attempts.sort(key=lambda x: x[0])
+        best_attempt = decorated_attempts[0][1]
+
+        return {'orders': sorted(best_attempt.orders),
+                'total_fee': best_attempt.total_fee,
+                'initial_portfolio': initial_portfolio,
+                'proposed_portfolio': best_attempt.portfolio}

@@ -85,6 +85,16 @@ class DummyExchange():
         if order.amount < limits['amount']['min'] \
            or order.amount * order.price < limits['cost']['min']:
             return None
+
+        base, quote = order.pair.split('/')
+        if order.direction.upper() == 'BUY':
+            if order.amount * order.price > self._balances[quote]:
+                return None
+
+        if order.direction.upper() == 'SELL':
+            if order.amount > self._balances[base]:
+                return None
+
         order.type_ = 'LIMIT'
         return order
 

@@ -1,2 +1,0 @@
-class OrderTooSmallException(Exception):
-    pass

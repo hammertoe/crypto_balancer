@@ -42,7 +42,8 @@ class Portfolio():
     @property
     def balances_quote(self):
         _balances_quote = {}
-        for cur, amount in self.balances.items():
+        for cur in self.currencies:
+            amount = self.balances[cur]
             if cur == self.quote_currency:
                 _balances_quote[cur] = amount
             else:
@@ -59,7 +60,7 @@ class Portfolio():
 
     @property
     def needs_balancing(self):
-        return self.balance_rmse > self.threshold
+        return self.balance_max_error > self.threshold
 
     @property
     def balances_pct(self):
@@ -74,12 +75,12 @@ class Portfolio():
                 for cur in self.currencies}
 
     @property
-    def balance_rmse(self):
+    def balance_errors_pct(self):
         _total = self.valuation_quote
         _balances_quote = self.balances_quote
 
         if not _total:
-            return 0
+            return []
 
         def calc_diff(cur):
             return _total * (self.targets[cur] / 100.0) \
@@ -87,8 +88,20 @@ class Portfolio():
 
         pcts = [(calc_diff(cur) / _total) * 100.0
                 for cur in self.currencies]
-        dev = math.sqrt(sum([x**2 for x in pcts]) / len(pcts))
-        return dev
+        return pcts
+
+    @property
+    def balance_rms_error(self):
+        pcts = self.balance_errors_pct
+        num = len(pcts)
+        if not num:
+            return 0.0
+        return math.sqrt(sum([x**2 for x in pcts]) / num)
+
+    @property
+    def balance_max_error(self):
+        pcts = self.balance_errors_pct
+        return max(pcts)
 
     @property
     def differences_quote(self):

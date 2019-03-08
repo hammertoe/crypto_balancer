@@ -24,8 +24,6 @@ def main(args=None):
                         help='Actually place orders')
     parser.add_argument('--force', action="store_true",
                         help='Force rebalance')
-    parser.add_argument('--accuracy', action="store_true",
-                        help='Optimize for accuracy, rather than cost')
     parser.add_argument('--max_orders', default=5,
                         help='Maximum number of orders to perform in '
                              'rebalance')
@@ -84,11 +82,14 @@ def main(args=None):
     executor = Executor(portfolio, exchange, balancer)
     res = executor.run(force=args.force,
                        trade=args.trade,
-                       accuracy=args.accuracy,
                        max_orders=max_orders)
 
-    print("  Balance error: {:.2g} / {:.2g}".format(
-        res['initial_portfolio'].balance_rmse,
+    print("  Balance RMS error: {:.2g} / {:.2g}".format(
+        res['initial_portfolio'].balance_rms_error,
+        threshold))
+
+    print("  Balance Max error: {:.2g} / {:.2g}".format(
+        res['initial_portfolio'].balance_max_error,
         threshold))
 
     print()
@@ -115,8 +116,12 @@ def main(args=None):
     print()
     print("  Total value: {:.2f} {}".format(portfolio.valuation_quote,
                                             portfolio.quote_currency))
-    print("  Balance error: {:.2g} / {:.2g}".format(
-        res['proposed_portfolio'].balance_rmse,
+    print("  Balance RMS error: {:.2g} / {:.2g}".format(
+        res['proposed_portfolio'].balance_rms_error,
+        threshold))
+
+    print("  Balance Max error: {:.2g} / {:.2g}".format(
+        res['proposed_portfolio'].balance_max_error,
         threshold))
 
     total_fee = '%s' % float('%.4g' % res['total_fee'])
