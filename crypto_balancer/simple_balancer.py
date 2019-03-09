@@ -24,7 +24,7 @@ class SimpleBalancer():
                     res.append((p, n))
         return res
 
-    def balance(self, initial_portfolio, exchange, accuracy=1.0, max_orders=5):
+    def balance(self, initial_portfolio, exchange, max_orders=5):
         rates = exchange.rates
         quote_currency = initial_portfolio.quote_currency
 

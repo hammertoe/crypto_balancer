@@ -273,12 +273,12 @@ class test_Portfolio(unittest.TestCase):
 
 class test_SimpleBalancer(unittest.TestCase):
 
-    def execute(self, targets, current, rates, fee=0.001):
+    def execute(self, targets, current, rates, fee=0.001, max_orders=5):
         exchange = DummyExchange(targets.keys(), current, rates, fee)
         portfolio = Portfolio.make_portfolio(targets, exchange)
 
         balancer = SimpleBalancer()
-        return balancer.balance(portfolio, exchange, max_orders=5)
+        return balancer.balance(portfolio, exchange, max_orders=max_orders)
 
     def test_noop(self):
 
@@ -511,6 +511,34 @@ class test_SimpleBalancer(unittest.TestCase):
         for cur in targets:
             self.assertAlmostEqual(targets[cur],
                                    (base_amounts[cur] / total_base) * 100)
+
+    def test_real2a_max_orders(self):
+
+        targets = {'XRP': 40,
+                   'XLM': 20,
+                   'BTC': 20,
+                   'ETH': 10,
+                   'USDT': 10, }
+        current = {'XRP': 3352,
+                   'XLM': 0,
+                   'BTC': 0,
+                   'ETH': 0,
+                   'USDT': 243, }
+        rates = {'XRP/USDT': 0.32076,
+                 'XLM/USDT': 0.09084,
+                 'XLM/XRP': 0.283366,
+                 'XRP/BTC': 0.00008102,
+                 'XRP/ETH': 0.00217366,
+                 'BTC/USDT': 3968.13,
+                 'ETH/USDT': 147.81,
+                 }
+
+        res = self.execute(targets, current, rates, max_orders=3)
+        # Test the orders we get are correct
+        expected = [Order('ETH/USDT', 'BUY', 0.7521902983559976, 147.81),
+                    Order('XLM/XRP', 'BUY', 2902.218229854689, 0.283366),
+                    Order('XRP/BTC', 'SELL', 821.9151515151515, 8.102e-05), ]
+        self.assertEqual(res['orders'], expected)
 
     def test_real2_nondirect(self):
 
