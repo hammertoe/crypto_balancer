@@ -1,0 +1,10 @@
+[binance]
+api_key = 
+api_secret = 
+threshold = 0.2
+targets = XRP 40
+          XLM 20
+          BTC 10
+	  ETH 10
+	  BNB 10
+	  USDT 10
