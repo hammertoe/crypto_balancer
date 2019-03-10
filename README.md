@@ -23,16 +23,17 @@ pip install crypto_balancer
 Via source from Github:
 
 ```
-$ git clone git@github.com:hammertoe/crypto_balancer.git
-$ cd crypto_balancer
-$ virtualenv --python=python3 .
-$ . bin/activate
-$ pip install -r requirements.txt
-$ pip install -e .
+git clone git@github.com:hammertoe/crypto_balancer.git
+cd crypto_balancer
+virtualenv --python=python3 .
+. bin/activate
+pip install -r requirements.txt
+pip install -e .
 ```
 
 ## Config
-Create a config file in `config.ini` with definition of your exchange and portfolio percentages, and theshold (percent) that rebalancing is needed:
+Create a config file in `config.ini` with definition of your exchange and portfolio percentages, and theshold (percent) that rebalancing is needed.
+An example config file is included at `config.ini.example` but below is all you need:
 
 ```
 [binance]
