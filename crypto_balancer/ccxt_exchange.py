@@ -35,10 +35,19 @@ class CCXTExchange():
     @lru_cache(maxsize=None)
     def rates(self):
         _rates = {}
+        if self.exch.has['fetchTickers']:
+            tickers = self.exch.fetchTickers()
+        else:
+            tickers = {}
+
         for pair in self.pairs:
-            orderbook = self.exch.fetchOrderBook(pair)
-            high = orderbook['asks'][0][0]
-            low = orderbook['bids'][0][0]
+            if tickers:
+                high = tickers[pair]['ask']
+                low = tickers[pair]['bid']
+            else:
+                orderbook = self.exch.fetchOrderBook(pair)
+                high = orderbook['asks'][0][0]
+                low = orderbook['bids'][0][0]
             mid = (high + low) / 2.0
             _rates[pair] = mid
 
