@@ -2,7 +2,7 @@
 
 # Cryptocurrency Portfolio Balancer
 
-**USE AT YOUR OWN RISK. THIS TRADES REAL MONEY. NO WARRENTY IS GIVEN**
+**USE AT YOUR OWN RISK. THIS TRADES REAL MONEY. NO WARRANTY IS GIVEN**
 
 A script that can connect to a cryptocurrency exchange and buy/sell cryptocurrency to keep your portfolio balancer to a certain ratio.
 
