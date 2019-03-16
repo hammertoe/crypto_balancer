@@ -13,6 +13,7 @@ class CCXTExchange():
         self.exch = getattr(ccxt, name)({'nonce': ccxt.Exchange.milliseconds})
         self.exch.apiKey = api_key
         self.exch.secret = api_secret
+        self.exch.load_markets()
 
     @property
     @lru_cache(maxsize=None)
