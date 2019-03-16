@@ -28,7 +28,7 @@ class CCXTExchange():
         for i in self.currencies:
             for j in self.currencies:
                 pair = "{}/{}".format(i, j)
-                if pair in self.exch.markets:
+                if pair in self.exch.markets and self.exch.markets[pair]['active']:
                     _pairs.append(pair)
         return _pairs
 
