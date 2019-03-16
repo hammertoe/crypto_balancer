@@ -2,21 +2,38 @@
 
 # Cryptocurrency Portfolio Balancer
 
-**USE AT YOUR OWN RISK. THIS TRADES REAL MONEY. NO WARRENTY IS GIVEN**
+**USE AT YOUR OWN RISK. THIS TRADES REAL MONEY. NO WARRANTY IS GIVEN**
 
 A script that can connect to a cryptocurrency exchange and buy/sell cryptocurrency to keep your portfolio balancer to a certain ratio.
 
+## To support this project
+
+To support this project, feel free to send any tips in XRP to:
+https://www.xrptipbot.com/u:HammerToe/n:twitter
+
+Or direct to `rPEPPER7kfTD9w2To4CQk6UCfuHM9c6GDY` dest tag `8172226`
+
 ## Install
 
+Via Pip:
 ```
-$ virtualenv --python=python3 .
-$ . bin/activate
-$ pip install -r requirements.txt
-$ pip install -e .
+pip install crypto_balancer
+```
+
+Via source from Github:
+
+```
+git clone git@github.com:hammertoe/crypto_balancer.git
+cd crypto_balancer
+virtualenv --python=python3 .
+. bin/activate
+pip install -r requirements.txt
+pip install -e .
 ```
 
 ## Config
-Create a config file in `config.ini` with definition of your exchange and portfolio percentages, and theshold (percent) that rebalancing is needed:
+Create a config file in `config.ini` with definition of your exchange and portfolio percentages, and theshold (percent) that rebalancing is needed.
+An example config file is included at `config.ini.example` but below is all you need:
 
 ```
 [binance]
