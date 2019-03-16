@@ -49,6 +49,8 @@ def main(args=None):
                      .format(total_target))
         sys.exit(1)
 
+    valuebase = config.get('valuebase') or args.valuebase
+
     exchange = CCXTExchange(args.exchange,
                             targets.keys(),
                             config['api_key'],
@@ -65,7 +67,7 @@ def main(args=None):
 
     threshold = float(config['threshold'])
     max_orders = int(args.max_orders)
-    portfolio = Portfolio.make_portfolio(targets, exchange, threshold)
+    portfolio = Portfolio.make_portfolio(targets, exchange, threshold, valuebase)
 
     print("Current Portfolio:")
     for cur in portfolio.balances:
