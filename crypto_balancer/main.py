@@ -52,6 +52,8 @@ def main(args=None):
                      .format(total_target))
         sys.exit(1)
 
+    valuebase = config.get('valuebase') or args.valuebase
+
     exchange = CCXTExchange(args.exchange,
                             targets.keys(),
                             config['api_key'],
@@ -68,15 +70,9 @@ def main(args=None):
 
     threshold = float(config['threshold'])
     max_orders = int(args.max_orders)
-    portfolio = Portfolio.make_portfolio(targets, exchange, threshold)
-    
-    initial_portfolio = portfolio.copy()
-    initial_portfolio.balances = bals = {'XRP': 3270.878282, 'XLM':0, 'BTC': 0.13555656, 'ETH': 3.7841149699999996, 'BNB': 25.08106735, 'USDT': 251.05799855, 'USDC': 0.0}
 
-    bnh = initial_portfolio.valuation_quote
-    print("B&H Portfolio value:", bnh)
-                                         
-    
+    portfolio = Portfolio.make_portfolio(targets, exchange, threshold, valuebase)
+
     print("Current Portfolio:")
     for cur in portfolio.balances:
         bal = portfolio.balances[cur]
