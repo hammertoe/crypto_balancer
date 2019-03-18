@@ -50,7 +50,9 @@ class CCXTExchange():
                 high = orderbook['asks'][0][0]
                 low = orderbook['bids'][0][0]
             mid = (high + low) / 2.0
-            _rates[pair] = mid
+            _rates[pair] = {'mid': mid,
+                            'high': high,
+                            'low': low, }
 
         return _rates
 

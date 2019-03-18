@@ -26,10 +26,10 @@ LIMITS = {'BNB/BTC': {'amount': {'max': 90000000.0, 'min': 0.01},
                       'cost': {'max': None, 'min': 0.01},
                       'price': {'max': None, 'min': None}},
           'XRP/USDT': {'amount': {'max': 90000000.0, 'min': 0.1},
-                       'cost': {'max': None, 'min': 1.0},
+                       'cost': {'max': None, 'min': 10.0},
                        'price': {'max': None, 'min': None}},
           'XLM/USDT': {'amount': {'max': 90000000.0, 'min': 0.1},
-                       'cost': {'max': None, 'min': 1.0},
+                       'cost': {'max': None, 'min': 10.0},
                        'price': {'max': None, 'min': None}},
           'XLM/XRP': {'amount': {'max': 90000000.0, 'min': 0.1},
                       'cost': {'max': None, 'min': 1.0},
@@ -42,9 +42,14 @@ class DummyExchange():
         self.name = 'DummyExchange'
         self._currencies = currencies
         self._balances = balances
-        self._rates = rates
         self._fee = fee
-
+        self._rates = {}
+        for cur in rates or {}:
+            self._rates[cur] = {'mid': rates[cur],
+                                'high': rates[cur]*1.001,
+                                'low': rates[cur]*0.999,
+                                }
+        
     @property
     def balances(self):
         return self._balances
@@ -65,8 +70,9 @@ class DummyExchange():
 
         _rates = {}
         for pair in self.pairs:
-            _rates[pair] = 1.0
-
+            _rates[pair] = {'mid': 1.0,
+                            'low': 0.99,
+                            'high': 1.01, }
         return _rates
 
     @property

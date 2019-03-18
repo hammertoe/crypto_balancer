@@ -12,7 +12,7 @@ class Executor():
         self.exchange = exchange
         self.balancer = balancer
 
-    def run(self, force=False, trade=False, max_orders=5):
+    def run(self, force=False, trade=False, max_orders=5, mode='mid'):
 
         balances = self.portfolio.balances
 
@@ -27,7 +27,8 @@ class Executor():
         if self.portfolio.needs_balancing or force:
             orders = self.balancer.balance(self.portfolio,
                                            self.exchange,
-                                           max_orders)
+                                           max_orders,
+                                           mode)
 
             if orders['proposed_portfolio']:
                 res['proposed_portfolio'] = orders['proposed_portfolio']
