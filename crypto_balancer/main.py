@@ -31,6 +31,9 @@ def main(args=None):
                         help='Currency to value portfolio in')
     parser.add_argument('--cancel', action="store_true",
                         help='Cancel open orders first')
+    parser.add_argument('--mode', choices=['mid', 'passive', 'cheap'],
+                        default='mid',
+                        help='Mode to place orders')
     parser.add_argument('exchange', choices=exchange_choices())
     args = parser.parse_args()
 
@@ -66,7 +69,14 @@ def main(args=None):
     threshold = float(config['threshold'])
     max_orders = int(args.max_orders)
     portfolio = Portfolio.make_portfolio(targets, exchange, threshold)
+    
+    initial_portfolio = portfolio.copy()
+    initial_portfolio.balances = bals = {'XRP': 3270.878282, 'XLM':0, 'BTC': 0.13555656, 'ETH': 3.7841149699999996, 'BNB': 25.08106735, 'USDT': 251.05799855, 'USDC': 0.0}
 
+    bnh = initial_portfolio.valuation_quote
+    print("B&H Portfolio value:", bnh)
+                                         
+    
     print("Current Portfolio:")
     for cur in portfolio.balances:
         bal = portfolio.balances[cur]
@@ -82,7 +92,8 @@ def main(args=None):
     executor = Executor(portfolio, exchange, balancer)
     res = executor.run(force=args.force,
                        trade=args.trade,
-                       max_orders=max_orders)
+                       max_orders=max_orders,
+                       mode=args.mode)
 
     print("  Balance RMS error: {:.2g} / {:.2g}".format(
         res['initial_portfolio'].balance_rms_error,
@@ -91,7 +102,8 @@ def main(args=None):
     print("  Balance Max error: {:.2g} / {:.2g}".format(
         res['initial_portfolio'].balance_max_error,
         threshold))
-
+    print("  Performance over B&H {:.2f}%".format(((portfolio.valuation_quote/bnh)-1)*100))
+    
     print()
     if not portfolio.needs_balancing and not args.force:
         print("No balancing needed")

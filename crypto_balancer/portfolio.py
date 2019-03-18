@@ -50,7 +50,7 @@ class Portfolio():
                 pair = "{}/{}".format(cur, self.quote_currency)
                 if pair not in self.rates:
                     raise ValueError("Invalid pair: {}".format(pair))
-                _balances_quote[cur] = amount * self.rates[pair]
+                _balances_quote[cur] = amount * self.rates[pair]['mid']
 
         return _balances_quote
 

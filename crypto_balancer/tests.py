@@ -225,7 +225,7 @@ class test_Portfolio(unittest.TestCase):
         total_base = 0
         for cur in current:
             symbol = "{}/{}".format(cur, portfolio.quote_currency)
-            final_base[cur] = current[cur] * exchange.rates[symbol]
+            final_base[cur] = current[cur] * exchange.rates[symbol]['mid']
             final_base[cur] += portfolio.differences_quote[cur]
             total_base += final_base[cur]
 
@@ -261,7 +261,7 @@ class test_Portfolio(unittest.TestCase):
         total_base = 0
         for cur in current:
             symbol = "{}/{}".format(cur, portfolio.quote_currency)
-            final_base[cur] = current[cur] * exchange.rates[symbol]
+            final_base[cur] = current[cur] * exchange.rates[symbol]['mid']
             final_base[cur] += portfolio.differences_quote[cur]
             total_base += final_base[cur]
 
@@ -451,6 +451,7 @@ class test_SimpleBalancer(unittest.TestCase):
         rates = {'XRP/USDT': 0.32076,
                  'XLM/USDT': 0.09084,
                  'XLM/XRP': 0.283366,
+                 'USDT/USDT': 1.0,
                  }
 
         res = self.execute(targets, current, rates)
@@ -490,6 +491,7 @@ class test_SimpleBalancer(unittest.TestCase):
                  'XRP/ETH': 0.00217366,
                  'BTC/USDT': 3968.13,
                  'ETH/USDT': 147.81,
+                 'USDT/USDT': 1.0,
                  }
 
         res = self.execute(targets, current, rates)
@@ -559,6 +561,7 @@ class test_SimpleBalancer(unittest.TestCase):
                  'XRP/ETH': 0.00217366,
                  'BTC/USDT': 3968.13,
                  'ETH/USDT': 147.81,
+                 'USDT/USDT': 1.0,
                  }
 
         res = self.execute(targets, current, rates)

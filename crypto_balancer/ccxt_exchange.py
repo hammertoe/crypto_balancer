@@ -13,6 +13,7 @@ class CCXTExchange():
         self.exch = getattr(ccxt, name)({'nonce': ccxt.Exchange.milliseconds})
         self.exch.apiKey = api_key
         self.exch.secret = api_secret
+        self.exch.load_markets()
 
     @property
     @lru_cache(maxsize=None)
@@ -49,7 +50,9 @@ class CCXTExchange():
                 high = orderbook['asks'][0][0]
                 low = orderbook['bids'][0][0]
             mid = (high + low) / 2.0
-            _rates[pair] = mid
+            _rates[pair] = {'mid': mid,
+                            'high': high,
+                            'low': low, }
 
         return _rates
 
