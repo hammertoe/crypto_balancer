@@ -98,7 +98,6 @@ def main(args=None):
     print("  Balance Max error: {:.2g} / {:.2g}".format(
         res['initial_portfolio'].balance_max_error,
         threshold))
-    print("  Performance over B&H {:.2f}%".format(((portfolio.valuation_quote/bnh)-1)*100))
     
     print()
     if not portfolio.needs_balancing and not args.force:
