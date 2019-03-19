@@ -12,7 +12,7 @@ class Order():
         return f"{self.direction} {self.amount} {self.pair} @ {self.price}"
 
     def __repr__(self):
-        return f"Order('{self.pair}', '{self.direction}', '{self.amount}', '{self.price}'"
+        return f"Order('{self.pair}', '{self.direction}', {self.amount}, {self.price})"
 
     def __eq__(self, other):
         return self.pair == other.pair and \
