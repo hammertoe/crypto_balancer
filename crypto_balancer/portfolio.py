@@ -42,12 +42,13 @@ class Portfolio():
     @property
     def balances_quote(self):
         _balances_quote = {}
+        qc = self.quote_currency
         for cur in self.currencies:
             amount = self.balances[cur]
             if cur == self.quote_currency:
                 _balances_quote[cur] = amount
             else:
-                pair = "{}/{}".format(cur, self.quote_currency)
+                pair = f"{cur}/{qc}"
                 if pair not in self.rates:
                     raise ValueError("Invalid pair: {}".format(pair))
                 _balances_quote[cur] = amount * self.rates[pair]
