@@ -31,6 +31,9 @@ def main(args=None):
                         help='Currency to value portfolio in')
     parser.add_argument('--cancel', action="store_true",
                         help='Cancel open orders first')
+    parser.add_argument('--mode', choices=['mid', 'passive', 'cheap'],
+                        default='mid',
+                        help='Mode to place orders')
     parser.add_argument('exchange', choices=exchange_choices())
     args = parser.parse_args()
 
@@ -49,6 +52,8 @@ def main(args=None):
                      .format(total_target))
         sys.exit(1)
 
+    valuebase = config.get('valuebase') or args.valuebase
+
     exchange = CCXTExchange(args.exchange,
                             targets.keys(),
                             config['api_key'],
@@ -65,7 +70,8 @@ def main(args=None):
 
     threshold = float(config['threshold'])
     max_orders = int(args.max_orders)
-    portfolio = Portfolio.make_portfolio(targets, exchange, threshold)
+
+    portfolio = Portfolio.make_portfolio(targets, exchange, threshold, valuebase)
 
     print("Current Portfolio:")
     for cur in portfolio.balances:
@@ -82,7 +88,8 @@ def main(args=None):
     executor = Executor(portfolio, exchange, balancer)
     res = executor.run(force=args.force,
                        trade=args.trade,
-                       max_orders=max_orders)
+                       max_orders=max_orders,
+                       mode=args.mode)
 
     print("  Balance RMS error: {:.2g} / {:.2g}".format(
         res['initial_portfolio'].balance_rms_error,
@@ -91,7 +98,7 @@ def main(args=None):
     print("  Balance Max error: {:.2g} / {:.2g}".format(
         res['initial_portfolio'].balance_max_error,
         threshold))
-
+    
     print()
     if not portfolio.needs_balancing and not args.force:
         print("No balancing needed")

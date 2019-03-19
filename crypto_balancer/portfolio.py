@@ -50,7 +50,7 @@ class Portfolio():
             else:
                 pair = f"{cur}/{qc}"
                 try:
-                    _balances_quote[cur] = amount * self.rates[pair]
+                    _balances_quote[cur] = amount * self.rates[pair]['mid']
                 except KeyError:
                     raise ValueError("Invalid pair: {}".format(pair))
 

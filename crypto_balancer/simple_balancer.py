@@ -20,13 +20,15 @@ class SimpleBalancer():
         res = product(positives, negatives)
         return res
 
-    def balance(self, initial_portfolio, exchange, max_orders=5):
+    def balance(self, initial_portfolio, exchange, max_orders=5, mode='mid'):
         rates = exchange.rates
         quote_currency = initial_portfolio.quote_currency
 
         # Add in the identify rate just so we don't have to special
         # case it later
-        rates["{}/{}".format(quote_currency, quote_currency)] = 1.0
+        rates["{}/{}".format(quote_currency, quote_currency)] = {'mid': 1.0,
+                                                                 'high': 1.0,
+                                                                 'low': 1.0, }
 
         todo = [Attempt(initial_portfolio)]
         attempts = []
@@ -73,16 +75,17 @@ class SimpleBalancer():
                 to_sell_pair_quote = "{}/{}".format(n_cur, quote_currency)
                 to_buy_pair_quote = "{}/{}".format(p_cur, quote_currency)
 
-                for trade_amount_quote in (p_amount,
-                                           -n_amount,
-                                           min_trade_amount_quote,
-                                           min_trade_amount_quote * 1.5):
+                amounts = [p_amount, -n_amount,]
+                if mode == 'mid':
+                    amounts.extend([min_trade_amount_quote, min_trade_amount_quote * 1.5])
+
+                for trade_amount_quote in amounts:
 
                     # Work out how much of the currency to buy/sell
                     to_sell_amount_cur = \
-                        trade_amount_quote / rates[to_sell_pair_quote]
+                        trade_amount_quote / rates[to_sell_pair_quote]['mid']
                     to_buy_amount_cur = \
-                        trade_amount_quote / rates[to_buy_pair_quote]
+                        trade_amount_quote / rates[to_buy_pair_quote]['mid']
 
                     if trade_direction == "BUY":
                         trade_amount = to_buy_amount_cur
@@ -92,7 +95,14 @@ class SimpleBalancer():
 
                     # We got a direction, so we know we can either
                     # buy or sell this pair
-                    trade_rate = rates[trade_pair]
+                    if mode == 'passive':
+                        if trade_direction == 'BUY':
+                            trade_rate = rates[trade_pair]['low']
+                        if trade_direction == 'SELL':
+                            trade_rate = rates[trade_pair]['high']                         
+                    else:
+                        trade_rate = rates[trade_pair]['mid']
+
                     order = Order(trade_pair, trade_direction,
                                   trade_amount, trade_rate)
 
