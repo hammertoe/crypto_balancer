@@ -1,5 +1,5 @@
 from crypto_balancer.order import Order
-
+from itertools import product
 
 class Attempt():
     def __init__(self, portfolio, orders=None, total_fee=0.0, depth=0,
@@ -17,11 +17,7 @@ class SimpleBalancer():
         differences = differences_quote.items()
         positives = [x for x in differences if x[1] > 0.01]
         negatives = [x for x in differences if x[1] < -0.01]
-        res = []
-        for p in sorted(positives, key=lambda x: x[1], reverse=True):
-            for n in sorted(negatives, key=lambda x: x[1]):
-                if p[0] != n[0]:
-                    res.append((p, n))
+        res = product(positives, negatives)
         return res
 
     def balance(self, initial_portfolio, exchange, max_orders=5):
