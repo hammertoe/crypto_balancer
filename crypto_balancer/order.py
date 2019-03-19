@@ -9,12 +9,10 @@ class Order():
         self.type_ = None
 
     def __str__(self):
-        return "{} {} {} @ {}".format(self.direction, self.amount,
-                                      self.pair, self.price)
+        return f"{self.direction} {self.amount} {self.pair} @ {self.price}"
 
     def __repr__(self):
-        return "Order('{}', '{}', {}, {})".format(self.pair, self.direction,
-                                                  self.amount, self.price)
+        return f"Order('{self.pair}', '{self.direction}', '{self.amount}', '{self.price}'"
 
     def __eq__(self, other):
         return self.pair == other.pair and \
@@ -23,7 +21,9 @@ class Order():
             self.price == other.price
 
     def __lt__(self, other):
-        return str(self) < str(other)
+        return (self.pair, self.direction, self.amount, self.price) < \
+            (other.pair, other.direction, other.amount, other.price)
 
     def __hash__(self):
-        return hash(str(self))
+        return hash((self.pair, self.direction, self.amount, self.price))
+
