@@ -49,9 +49,10 @@ class Portfolio():
                 _balances_quote[cur] = amount
             else:
                 pair = f"{cur}/{qc}"
-                if pair not in self.rates:
+                try:
+                    _balances_quote[cur] = amount * self.rates[pair]
+                except KeyError:
                     raise ValueError("Invalid pair: {}".format(pair))
-                _balances_quote[cur] = amount * self.rates[pair]
 
         return _balances_quote
 
@@ -77,8 +78,8 @@ class Portfolio():
 
     @property
     def balance_errors_pct(self):
-        _total = self.valuation_quote
         _balances_quote = self.balances_quote
+        _total = sum(_balances_quote.values())
 
         if not _total:
             return []

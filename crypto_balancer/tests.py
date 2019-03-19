@@ -1,4 +1,6 @@
 import unittest
+from pstats import Stats
+import cProfile
 
 from crypto_balancer.simple_balancer import SimpleBalancer
 from crypto_balancer.portfolio import Portfolio
@@ -37,8 +39,8 @@ class test_Order(unittest.TestCase):
         c = Order('XRP/BTC', 'SELL', 20, 0.0001)
         self.assertNotEqual(a, c)
 
-        self.assertLess(a, c)
-        self.assertGreater(c, a)
+        self.assertLess(c, a)
+        self.assertGreater(a, c)
 
     def test_ReprStrOrder(self):
         a = Order('XRP/USDT', 'BUY', 10, 0.32)
@@ -273,6 +275,20 @@ class test_Portfolio(unittest.TestCase):
 
 class test_SimpleBalancer(unittest.TestCase):
 
+    def XsetUp(self):
+        """init each test"""
+        self.pr = cProfile.Profile()
+        self.pr.enable()
+        print("\n<<<---")
+
+    def XtearDown(self):
+        """finish any test"""
+        p = Stats (self.pr)
+        p.strip_dirs()
+        p.sort_stats('cumtime')
+        p.print_callees(10)
+        print("\n--->>>")
+    
     def execute(self, targets, current, rates, fee=0.001, max_orders=5):
         exchange = DummyExchange(targets.keys(), current, rates, fee)
         portfolio = Portfolio.make_portfolio(targets, exchange)
@@ -325,8 +341,8 @@ class test_SimpleBalancer(unittest.TestCase):
 
         res = self.execute(targets, current, rates)
 
-        expected = [Order('XRP/USDT', 'BUY', 1000, 0.5),
-                    Order('XLM/USDT', 'BUY', 800, 0.5), ]
+        expected = [Order('XLM/USDT', 'BUY', 800, 0.5),
+                    Order('XRP/USDT', 'BUY', 1000, 0.5), ]
         self.assertEqual(res['orders'], expected)
 
     def test_start_all_xrp(self):
@@ -455,8 +471,8 @@ class test_SimpleBalancer(unittest.TestCase):
 
         res = self.execute(targets, current, rates)
         # Test the orders we get are correct
-        expected = [Order('XLM/XRP', 'BUY', 11813.295267503301, 0.283366),
-                    Order('XLM/USDT', 'BUY', 43.58363936591818, 0.09084), ]
+        expected = [Order('XLM/USDT', 'BUY', 43.58363936591818, 0.09084),
+                    Order('XLM/XRP', 'BUY', 11813.295267503301, 0.283366), ]
         self.assertEqual(res['orders'], expected)
 
         # Test that the final amounts are in proportion to the targets
@@ -497,8 +513,9 @@ class test_SimpleBalancer(unittest.TestCase):
         expected = [Order('ETH/USDT', 'BUY', 0.745424856234355, 147.81),
                     Order('XLM/USDT', 'BUY', 11.008366358432408, 0.09084),
                     Order('XLM/XRP', 'BUY', 2891.2098634962567, 0.283366),
-                    Order('XRP/ETH', 'SELL', 67.45698964958218, 0.00217366),
-                    Order('XRP/BTC', 'SELL', 821.9151515151515, 8.102e-05), ]
+                    Order('XRP/BTC', 'SELL', 821.9151515151515, 8.102e-05),
+                    Order('XRP/ETH', 'SELL', 67.45698964958218, 0.00217366), ]
+
         self.assertEqual(res['orders'], expected)
 
         # Test that the final amounts are in proportion to the targets
@@ -564,8 +581,8 @@ class test_SimpleBalancer(unittest.TestCase):
         res = self.execute(targets, current, rates)
         # Test the orders we get are correct
         expected = [Order('XLM/USDT', 'BUY', 1223.9239101717305, 0.09084),
-                    Order('XRP/ETH', 'SELL', 410.95757575757574, 0.00217366),
-                    Order('XRP/BTC', 'SELL', 821.9151515151515, 8.102e-05), ]
+                    Order('XRP/BTC', 'SELL', 821.9151515151515, 8.102e-05),
+                    Order('XRP/ETH', 'SELL', 410.95757575757574, 0.00217366), ]
 
         self.assertEqual(res['orders'], expected)
 
