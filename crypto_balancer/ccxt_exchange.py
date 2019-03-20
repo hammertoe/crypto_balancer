@@ -92,7 +92,7 @@ class CCXTExchange():
         if order.amount < limits['amount']['min'] \
            or order.amount * order.price < limits['cost']['min']:
             return None
-        order.type_ = 'LIMIT'
+        order.type_ = 'LIMIT_MAKER' if self.exch.id == 'binance' else 'LIMIT'
         return order
 
     def execute_order(self, order):
