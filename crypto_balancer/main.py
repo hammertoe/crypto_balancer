@@ -155,6 +155,7 @@ def main(args=None):
         pct = config.get('whalenets')
         if pct:
             whalenets = Whalenets(exchange, valuebase, float(pct))
+            print()
             print("Whalenets deployed:")
             for order in whalenets.deploy():
                 order = order_to_order(order)
