@@ -23,6 +23,12 @@ class CCXTExchange():
 
     @property
     @lru_cache(maxsize=None)
+    def available_balances(self):
+        bals = self.exch.fetch_balance()['free']
+        return {k: bals[k] for k in self.currencies}
+
+    @property
+    @lru_cache(maxsize=None)
     def pairs(self):
         _pairs = []
         for i in self.currencies:

@@ -40,7 +40,7 @@ class DummyExchange():
 
     def __init__(self, currencies, balances, rates=None, fee=0.001):
         self.name = 'DummyExchange'
-        self._currencies = currencies
+        self.currencies = currencies
         self._balances = balances
         self._fee = fee
         self._rates = {}
@@ -55,10 +55,14 @@ class DummyExchange():
         return self._balances
 
     @property
+    def available_balances(self):
+        return self._balances
+
+    @property
     def pairs(self):
         _pairs = []
-        for i in self._currencies:
-            for j in self._currencies:
+        for i in self.currencies:
+            for j in self.currencies:
                 pair = "{}/{}".format(i, j)
                 _pairs.append(pair)
         return _pairs

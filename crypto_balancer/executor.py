@@ -4,6 +4,11 @@ from crypto_balancer.order import Order
 
 logger = logging.getLogger(__name__)
 
+def order_to_order(r):
+    return Order(r['symbol'],
+                 r['side'].upper(),
+                 r['amount'],
+                 r['price'])
 
 class Executor():
 
@@ -39,10 +44,7 @@ class Executor():
                     for order in orders['orders']:
                         try:
                             r = self.exchange.execute_order(order)
-                            res['success'].append(Order(r['symbol'],
-                                                        r['side'].upper(),
-                                                        r['amount'],
-                                                        r['price']))
+                            res['success'].append(order_to_order(r))
                         except Exception as e:
                             res['errors'].append(order)
                             logger.error("Could not place order: {} {}"

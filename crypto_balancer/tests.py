@@ -1,16 +1,21 @@
 import unittest
 from pstats import Stats
 import cProfile
+import random
+import unittest.mock as mock
 
 from crypto_balancer.simple_balancer import SimpleBalancer
 from crypto_balancer.portfolio import Portfolio
 from crypto_balancer.dummy_exchange import DummyExchange
 from crypto_balancer.executor import Executor
 from crypto_balancer.order import Order
+from crypto_balancer.whalenets import Whalenets
 
 import sys
 sys.path.append('..')      # XXX Probably needed to import your code
 
+def choice0(values):
+    return values[0]
 
 class test_Order(unittest.TestCase):
 
@@ -953,6 +958,31 @@ class test_DummyExchange(unittest.TestCase):
         order = Order('ZEC/USDT', 'BUY', 10, 0.32)
         self.assertIsNone(self.exchange.preprocess_order(order))
 
+
+class test_WhaleNets(unittest.TestCase):
+    def setUp(self):
+        balances = {'XRP': 100.0,
+                    'BTC': 200.0,
+                    'USDT': 300.0}
+        rates = {'XRP/USDT': 0.33,
+                 'BTC/USDT': 3500.0}
+        self.exchange = DummyExchange(balances.keys(), balances, rates)
+        self.whalenets = Whalenets(self.exchange, 'USDT', 0.5)
+
+    def test_calc_whale_nets(self):
+        with mock.patch('whalenets.random.choice', choice0):
+            orders = self.whalenets.calc_whale_nets()
+            orders = sorted(tuple(orders))
+        expected = [Order('BTC/USDT', 'SELL', 200.0, 3521.017499999999),
+                    Order('XRP/USDT', 'BUY', 914.5737788953869, 0.32802165),
+                    Order('XRP/USDT', 'SELL', 100.0, 0.3319816499999999)]
+        self.assertEqual(orders, expected)
+
+    def test_deploy_whale_nets(self):
+        with mock.patch('whalenets.random.choice', choice0):
+            orders = self.whalenets.deploy()
+        expected = {'XRP': 2143543.357596573, 'BTC': 0.0, 'USDT': 0.0}
+        self.assertEqual(self.exchange.balances, expected)
 
 if __name__ == '__main__':  # pragma: no cover
     unittest.main()

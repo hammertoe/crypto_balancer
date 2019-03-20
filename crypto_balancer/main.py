@@ -5,8 +5,9 @@ import sys
 
 from crypto_balancer.simple_balancer import SimpleBalancer
 from crypto_balancer.ccxt_exchange import CCXTExchange, exchanges
-from crypto_balancer.executor import Executor
+from crypto_balancer.executor import Executor, order_to_order
 from crypto_balancer.portfolio import Portfolio
+from crypto_balancer.whalenets import Whalenets
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +32,8 @@ def main(args=None):
                         help='Currency to value portfolio in')
     parser.add_argument('--cancel', action="store_true",
                         help='Cancel open orders first')
+    parser.add_argument('--whalenets', action="store_true",
+                        help='Deploy whalenets')
     parser.add_argument('--mode', choices=['mid', 'passive', 'cheap'],
                         default='mid',
                         help='Mode to place orders')
@@ -109,45 +112,53 @@ def main(args=None):
     print("Proposed Portfolio:")
     portfolio = res['proposed_portfolio']
 
-    if not portfolio:
-        print("Could not calculate a better portfolio")
-        sys.exit(0)
+    if portfolio:
+        for cur in portfolio.balances:
+            bal = portfolio.balances[cur]
+            pct = portfolio.balances_pct[cur]
+            tgt = targets[cur]
+            print("  {:<6s} {:<8.2f} ({:>5.2f} / {:>5.2f}%)"
+                  .format(cur, bal, pct, tgt))
 
-    for cur in portfolio.balances:
-        bal = portfolio.balances[cur]
-        pct = portfolio.balances_pct[cur]
-        tgt = targets[cur]
-        print("  {:<6s} {:<8.2f} ({:>5.2f} / {:>5.2f}%)"
-              .format(cur, bal, pct, tgt))
+        print()
+        print("  Total value: {:.2f} {}".format(portfolio.valuation_quote,
+                                                portfolio.quote_currency))
+        print("  Balance RMS error: {:.2g} / {:.2g}".format(
+            res['proposed_portfolio'].balance_rms_error,
+            threshold))
 
-    print()
-    print("  Total value: {:.2f} {}".format(portfolio.valuation_quote,
-                                            portfolio.quote_currency))
-    print("  Balance RMS error: {:.2g} / {:.2g}".format(
-        res['proposed_portfolio'].balance_rms_error,
-        threshold))
+        print("  Balance Max error: {:.2g} / {:.2g}".format(
+            res['proposed_portfolio'].balance_max_error,
+            threshold))
 
-    print("  Balance Max error: {:.2g} / {:.2g}".format(
-        res['proposed_portfolio'].balance_max_error,
-        threshold))
+        total_fee = '%s' % float('%.4g' % res['total_fee'])
+        print("  Total fees to re-balance: {} {}"
+              .format(total_fee,
+                      portfolio.quote_currency))
 
-    total_fee = '%s' % float('%.4g' % res['total_fee'])
-    print("  Total fees to re-balance: {} {}"
-          .format(total_fee,
-                  portfolio.quote_currency))
+        print()
+        print("Orders:")
+        if args.trade:
+            for order in res['success']:
+                print("  Submitted: {}".format(order))
 
-    print()
-    print("Orders:")
-    if args.trade:
-        for order in res['success']:
-            print("  Submitted: {}".format(order))
+            for order in res['errors']:
+                print("  Failed: {}".format(order))
+        else:
+            for order in res['orders']:
+                print("  " + str(order))
 
-        for order in res['errors']:
-            print("  Failed: {}".format(order))
     else:
-        for order in res['orders']:
-            print("  " + str(order))
+        print("Could not calculate a better portfolio")
 
+    if args.trade and args.whalenets:
+        pct = config.get('whalenets')
+        if pct:
+            whalenets = Whalenets(exchange, valuebase, float(pct))
+            print("Whalenets deployed:")
+            for order in whalenets.deploy():
+                order = order_to_order(order)
+                print("  {}".format(order))
 
 if __name__ == '__main__':
     main()
