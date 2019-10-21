@@ -22,5 +22,5 @@ pytest-cov==2.6.1
 requests==2.21.0
 six==1.12.0
 typing-extensions==3.7.2
-urllib3==1.24.1
+urllib3==1.24.2
 yarl==1.1.0
