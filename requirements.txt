@@ -16,7 +16,7 @@ more-itertools==6.0.0
 multidict==4.5.2
 pluggy==0.8.1
 py==1.8.0
-pycares==2.4.0
+pycares==4.2.0
 pytest==4.3.0
 pytest-cov==2.6.1
 requests==2.21.0
